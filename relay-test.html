@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Relay diagnostic</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #12141a;
+    color: #fff;
+    font-family: system-ui, sans-serif;
+    padding: 24px;
+    font-size: 16px;
+  }
+  h1 { font-size: 26px; margin-bottom: 4px; }
+  h1 span { color: #1D9E75; }
+  .sub { color: #9aa0ab; margin-bottom: 18px; font-size: 14px; }
+  .sub b { color: #fff; }
+  .banner {
+    background: #1D9E75;
+    color: #06120d;
+    font-weight: 800;
+    font-size: 20px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    margin-bottom: 18px;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  th, td {
+    text-align: left;
+    padding: 8px 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    vertical-align: top;
+    font-size: 14px;
+  }
+  th { color: #9aa0ab; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .st { font-weight: 700; }
+  .st.open { color: #1D9E75; }
+  .st.wait { color: #e0a53a; }
+  .st.dead { color: #e06050; }
+  .count { font-variant-numeric: tabular-nums; color: #9aa0ab; }
+  .count.hit { color: #1D9E75; font-weight: 800; }
+  .msg { font-family: ui-monospace, monospace; font-size: 12px; color: #c8ccd4; word-break: break-all; }
+  .msg.chat { color: #1D9E75; font-weight: 700; font-size: 14px; }
+  .hint { margin-top: 18px; color: #9aa0ab; font-size: 14px; line-height: 1.6; }
+  .hint b { color: #fff; }
+</style>
+</head>
+<body>
+
+<div class="banner">PAGE LOADED OK, instance <span id="me"></span></div>
+<h1>Relay diagnostic <span id="sess"></span></h1>
+<div class="sub">
+  Testing both path styles on channels 1 to 6. Every 4s this page sends a beacon on channels 2, 4, 6.
+  <b>Open this same page in a second place (Chrome tab, or OBS)</b>: rows that receive the other
+  instance's beacons show which path style actually routes messages.
+  Then type something in your Zoom/Meet chat and watch which row lights up green.
+</div>
+
+<table>
+  <tr><th>Connection</th><th>Status</th><th>Received</th><th>Last message</th></tr>
+  <tbody id="rows"></tbody>
+</table>
+
+<div class="hint">
+  How to read this: <b>"open"</b> just means the socket connected.
+  What matters is the <b>Received</b> column. Beacons from the other instance prove
+  panel-to-overlay commands can route on that row's style + channel.
+  A green row with <b>chatname/chatmessage</b> content is your Zoom/Meet chat, and that row's
+  channel is your real chat channel. Whatever this page reveals maps to two lines in ssn-link.js:
+  DUAL_CHANNEL_PATH (the style) and the channel numbers.
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var HOST = 'wss://io.socialstream.ninja';
+  var me = Math.random().toString(36).slice(2, 7);
+  document.getElementById('me').textContent = me;
+
+  // session: ?session= or #session= or the one baked in below
+  var DEFAULT_SESSION = 'cYK3KqTVkh';
+  var session = DEFAULT_SESSION;
+  try {
+    var q = new URLSearchParams(location.search).get('session');
+    var h = (location.hash.match(/session=([^&]+)/) || [])[1];
+    session = q || h || DEFAULT_SESSION;
+  } catch (e) {}
+  document.getElementById('sess').textContent = 'session: ' + session;
+
+  var rowsEl = document.getElementById('rows');
+  var conns = [];
+
+  function addConn(label, url, channel, style) {
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td>' + label + '</td><td class="st wait">connecting</td>' +
+      '<td class="count">0</td><td class="msg"></td>';
+    rowsEl.appendChild(tr);
+    var cells = tr.children;
+    var c = { url: url, channel: channel, style: style, ws: null, n: 0 };
+
+    function open() {
+      var ws;
+      try { ws = new WebSocket(url); } catch (e) { cells[1].textContent = 'failed'; cells[1].className = 'st dead'; return; }
+      c.ws = ws;
+      ws.onopen = function () { cells[1].textContent = 'open'; cells[1].className = 'st open'; };
+      ws.onclose = function () {
+        cells[1].textContent = 'closed, retrying'; cells[1].className = 'st dead';
+        setTimeout(open, 3000);
+      };
+      ws.onmessage = function (ev) {
+        if (ev.data === 'pong' || ev.data === 'ping') return;
+        var text = String(ev.data);
+        var obj = null;
+        try { obj = JSON.parse(text); } catch (e) {}
+        // ignore our own beacons
+        if (obj && obj.beacon && obj.from === me) return;
+        c.n++;
+        cells[2].textContent = c.n;
+        cells[2].className = 'count hit';
+        var isChat = obj && (obj.chatmessage || obj.chatname);
+        cells[3].textContent = (isChat ? 'CHAT: ' : '') + text.slice(0, 220);
+        cells[3].className = 'msg' + (isChat ? ' chat' : '');
+      };
+      // keepalive
+      setInterval(function () { if (ws.readyState === 1) try { ws.send('ping'); } catch (e) {} }, 25000);
+    }
+    open();
+    conns.push(c);
+  }
+
+  for (var ch = 1; ch <= 6; ch++) {
+    addConn('ch' + ch + ' · single path (/join/S/' + ch + ')',
+      HOST + '/join/' + session + '/' + ch, ch, 'single');
+    addConn('ch' + ch + ' · dual path (/join/S/' + ch + '/' + ch + ')',
+      HOST + '/join/' + session + '/' + ch + '/' + ch, ch, 'dual');
+  }
+
+  // beacons on the channels that matter (2 = common SSN API channel,
+  // 4 = your chat channel, 6 = your control channel)
+  setInterval(function () {
+    conns.forEach(function (c) {
+      if ((c.channel === 2 || c.channel === 4 || c.channel === 6) && c.ws && c.ws.readyState === 1) {
+        c.ws.send(JSON.stringify({ beacon: true, from: me, style: c.style, channel: c.channel, t: Date.now() }));
+      }
+    });
+  }, 4000);
+})();
+</script>
+</body>
+</html>

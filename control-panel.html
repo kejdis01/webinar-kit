@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Webinar control panel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f3f0;
+    --panel: #ffffff;
+    --ink: #1b1e24;
+    --ink-soft: #6b6f78;
+    --line: #e3e1db;
+    --accent: #1D9E75;
+    --accent-ink: #0d5c43;
+    --danger: #c0442f;
+    --radius: 14px;
+    --font: 'Archivo', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    font-family: var(--font);
+    color: var(--ink);
+    min-height: 100vh;
+  }
+
+  .wrap { max-width: 760px; margin: 0 auto; padding: 28px 20px 60px; }
+
+  /* ---------- header ---------- */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 22px;
+  }
+  h1 { font-size: 21px; font-weight: 800; letter-spacing: -0.01em; }
+  h1 span { color: var(--ink-soft); font-weight: 500; }
+
+  .conn {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 13px;
+    color: var(--ink-soft);
+    font-weight: 500;
+  }
+  .dot {
+    display: inline-block;
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    background: #c9c6bf;
+    margin-right: 5px;
+    vertical-align: 1px;
+  }
+  .dot.ok { background: var(--accent); }
+  .dot.bad { background: #e0a53a; animation: blink 1.2s infinite; }
+  @keyframes blink { 50% { opacity: 0.3; } }
+
+  /* ---------- session bar ---------- */
+  .session-bar {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+  }
+  .session-bar label { font-size: 13px; font-weight: 600; color: var(--ink-soft); }
+  .session-bar input {
+    flex: 1;
+    min-width: 160px;
+    font: inherit;
+    font-size: 14px;
+    padding: 8px 12px;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    background: var(--bg);
+  }
+  .session-bar input:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent; }
+
+  /* ---------- buttons ---------- */
+  button {
+    font: inherit;
+    font-weight: 600;
+    font-size: 14px;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 16px;
+    cursor: pointer;
+    background: #e9e7e1;
+    color: var(--ink);
+    transition: background 0.15s, transform 0.05s;
+  }
+  button:hover { background: #dedbd3; }
+  button:active { transform: scale(0.98); }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button.primary { background: var(--ink); color: #fff; }
+  button.primary:hover { background: #2c313b; }
+  button.live { background: var(--accent); color: #fff; }
+  button.live:hover { background: #178a66; }
+  button.ghost { background: transparent; color: var(--ink-soft); }
+  button.ghost:hover { background: #e9e7e1; color: var(--ink); }
+  button.danger-ghost { background: transparent; color: var(--danger); }
+  button.danger-ghost:hover { background: #f7e8e4; }
+  button:disabled { opacity: 0.45; cursor: default; transform: none; }
+  kbd {
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    background: rgba(0,0,0,0.14);
+    border-radius: 5px;
+    padding: 1px 6px;
+    margin-left: 8px;
+  }
+  button.primary kbd, button.live kbd { background: rgba(255,255,255,0.22); }
+
+  /* ---------- tabs ---------- */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    background: #e9e7e1;
+    border-radius: 12px;
+    padding: 4px;
+    margin-bottom: 18px;
+  }
+  .tabs button {
+    flex: 1;
+    background: transparent;
+    color: var(--ink-soft);
+    padding: 10px 8px;
+    position: relative;
+  }
+  .tabs button:hover { color: var(--ink); background: rgba(255,255,255,0.5); }
+  .tabs button.active { background: var(--panel); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .tabs .on-air {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    margin-left: 7px;
+    animation: blink 1.4s infinite;
+  }
+
+  /* ---------- panels ---------- */
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 22px;
+  }
+  .hidden { display: none !important; }
+
+  .field { margin-bottom: 16px; }
+  .field label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    margin-bottom: 7px;
+  }
+  .field input[type=text] {
+    width: 100%;
+    font: inherit;
+    font-size: 15px;
+    padding: 10px 13px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--bg);
+  }
+  .field input[type=text]:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent; }
+
+  .opt-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
+  .opt-letter {
+    width: 34px; height: 34px;
+    flex: none;
+    border-radius: 9px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800;
+    font-size: 14px;
+    color: var(--ink-soft);
+  }
+  .opt-row input { flex: 1; font: inherit; font-size: 15px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); }
+  .opt-row input:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent; }
+  .opt-row .rm { padding: 8px 10px; }
+
+  .actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+  }
+  .actions .spacer { flex: 1; }
+
+  /* live tally on panel */
+  .tally { margin-top: 20px; }
+  .tally-head {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent-ink);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .tally-head::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: blink 1.4s infinite; }
+  .tally-row { display: grid; grid-template-columns: 28px 1fr 90px; gap: 10px; align-items: center; margin-bottom: 8px; font-size: 14px; }
+  .tally-row .tl { font-weight: 800; color: var(--ink-soft); }
+  .tally-bar { height: 8px; border-radius: 4px; background: var(--bg); overflow: hidden; }
+  .tally-fill { height: 100%; background: var(--accent); border-radius: 4px; width: 0%; transition: width 0.4s ease; }
+  .tally-n { text-align: right; font-variant-numeric: tabular-nums; color: var(--ink-soft); font-weight: 600; }
+
+  /* stats blocks (cloud) */
+  .stats { display: flex; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
+  .stat {
+    flex: 1;
+    min-width: 130px;
+    background: var(--bg);
+    border-radius: 12px;
+    padding: 14px 16px;
+  }
+  .stat b { display: block; font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .stat span { font-size: 12px; font-weight: 600; color: var(--ink-soft); }
+  .top-words { font-size: 14px; color: var(--ink-soft); line-height: 1.9; }
+  .top-words b { color: var(--ink); font-weight: 700; }
+
+  /* wheel chips */
+  .toggle-row { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; font-size: 14px; font-weight: 500; }
+  .toggle-row input { width: 18px; height: 18px; accent-color: var(--accent); }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; min-height: 38px; }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 6px 8px 6px 13px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .chip button {
+    width: 20px; height: 20px;
+    padding: 0;
+    border-radius: 50%;
+    background: #dedbd3;
+    font-size: 12px;
+    line-height: 1;
+  }
+  .chip button:hover { background: var(--danger); color: #fff; }
+  .chips-empty { font-size: 14px; color: var(--ink-soft); align-self: center; }
+  .add-row { display: flex; gap: 8px; }
+  .add-row input { flex: 1; font: inherit; font-size: 14px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); }
+  .add-row input:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent; }
+
+  .winner-note {
+    margin-top: 16px;
+    background: #e8f5f0;
+    border: 1px solid #bfe4d6;
+    color: var(--accent-ink);
+    border-radius: 12px;
+    padding: 13px 16px;
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  footer {
+    margin-top: 22px;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    line-height: 1.8;
+  }
+  footer kbd { background: #e3e1db; color: var(--ink); }
+
+  #sd-block { margin-top: 12px; }
+  #sd-urls { margin: 10px 0 8px; display: flex; flex-direction: column; gap: 5px; }
+  .sd-url {
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 12.5px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 7px 11px;
+    cursor: pointer;
+    color: var(--ink);
+    word-break: break-all;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .sd-url:hover { border-color: var(--accent); }
+  .sd-url b { color: var(--accent-ink); }
+  .sd-url.copied { background: #e8f5f0; border-color: var(--accent); }
+  .sd-hint { font-size: 12px; color: var(--ink-soft); }
+
+  .toast {
+    position: fixed;
+    left: 50%; bottom: 24px;
+    transform: translateX(-50%) translateY(70px);
+    background: var(--ink);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 11px 18px;
+    border-radius: 999px;
+    transition: transform 0.25s cubic-bezier(0.3, 1.2, 0.4, 1);
+    pointer-events: none;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* trigger mode (opened by Stream Deck with ?cmd=) */
+  #trigger-view {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 700;
+  }
+</style>
+</head>
+<body>
+
+<div id="trigger-view" class="hidden"></div>
+
+<div class="wrap" id="main-view">
+  <header>
+    <h1>Webinar toolkit <span>control panel</span></h1>
+    <div class="conn">
+      <span><span class="dot" id="dot-chat"></span>chat</span>
+      <span><span class="dot" id="dot-control"></span>overlay link</span>
+      <button class="ghost" id="btn-hide" title="Clear the overlay">Hide overlay<kbd>H</kbd></button>
+    </div>
+  </header>
+
+  <div class="session-bar">
+    <label for="session-input">SSN session ID</label>
+    <input id="session-input" type="text" placeholder="the session ID from Social Stream Ninja" spellcheck="false" autocomplete="off">
+    <button class="primary" id="btn-session">Connect</button>
+  </div>
+
+  <div class="tabs" role="tablist">
+    <button id="tab-poll" class="active" role="tab">Poll<kbd>1</kbd><span class="on-air hidden" id="air-poll"></span></button>
+    <button id="tab-cloud" role="tab">Word cloud<kbd>2</kbd><span class="on-air hidden" id="air-cloud"></span></button>
+    <button id="tab-wheel" role="tab">Wheel<kbd>3</kbd><span class="on-air hidden" id="air-wheel"></span></button>
+  </div>
+
+  <!-- ============ POLL ============ -->
+  <div class="panel" id="panel-poll">
+    <div class="field">
+      <label for="poll-q">Question</label>
+      <input type="text" id="poll-q" placeholder="What should we cover next?" maxlength="120">
+    </div>
+    <div class="field">
+      <label>Options (2–6)</label>
+      <div id="poll-opts"></div>
+      <button class="ghost" id="btn-add-opt">+ Add option</button>
+    </div>
+    <div class="actions">
+      <button class="live" id="btn-poll-live">Go live on overlay<kbd>P</kbd></button>
+      <button id="btn-poll-end" disabled>End poll</button>
+      <div class="spacer"></div>
+      <button class="ghost" id="btn-poll-new">New poll</button>
+    </div>
+    <div class="tally hidden" id="poll-tally">
+      <div class="tally-head">Live on overlay — <span id="tally-total">0 votes</span></div>
+      <div id="tally-rows"></div>
+    </div>
+  </div>
+
+  <!-- ============ WORD CLOUD ============ -->
+  <div class="panel hidden" id="panel-cloud">
+    <div class="stats">
+      <div class="stat"><b id="cloud-msg-count">0</b><span>messages collected</span></div>
+      <div class="stat"><b id="cloud-word-count">0</b><span>unique words</span></div>
+    </div>
+    <div class="top-words" id="cloud-top">The cloud fills up from every chat message once it's live. Common filler words are filtered out automatically.</div>
+    <div class="actions">
+      <button class="live" id="btn-cloud-live">Go live on overlay<kbd>W</kbd></button>
+      <button id="btn-cloud-clear" disabled>Clear cloud<kbd>C</kbd></button>
+    </div>
+  </div>
+
+  <!-- ============ WHEEL ============ -->
+  <div class="panel hidden" id="panel-wheel">
+    <div class="toggle-row">
+      <input type="checkbox" id="wheel-auto" checked>
+      <label for="wheel-auto">Auto-add everyone who chats</label>
+    </div>
+    <div class="chips" id="wheel-chips">
+      <span class="chips-empty">No entries yet. Chatters are added automatically, or add names below.</span>
+    </div>
+    <div class="add-row">
+      <input type="text" id="wheel-add-input" placeholder="Add a name manually" maxlength="30">
+      <button id="btn-wheel-add">Add</button>
+    </div>
+    <div class="actions">
+      <button class="primary" id="btn-wheel-show">Show wheel on overlay</button>
+      <button class="live" id="btn-wheel-spin">Spin the wheel<kbd>S</kbd></button>
+      <div class="spacer"></div>
+      <button class="danger-ghost" id="btn-wheel-reset">Reset<kbd>R</kbd></button>
+    </div>
+    <div class="winner-note hidden" id="wheel-winner-note"></div>
+  </div>
+
+  <footer>
+    Shortcuts: <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> switch tabs · <kbd>P</kbd> poll live · <kbd>W</kbd> cloud live · <kbd>C</kbd> clear cloud · <kbd>S</kbd> spin · <kbd>R</kbd> reset wheel · <kbd>H</kbd> or <kbd>Esc</kbd> hide overlay.<br>
+    <div id="sd-block">
+      Stream Deck (no focus needed): add a <b>Website</b> action, tick <b>"GET request in background"</b>, and use one of these URLs for the current session. Click one to copy it.
+      <div id="sd-urls"></div>
+      <span class="sd-hint">These update automatically when you change the session ID above, so they're always correct for this machine.</span>
+    </div>
+  </footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="ssn-link.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  /* ============================================================
+   * Trigger mode: Stream Deck opens control-panel.html?cmd=spin,
+   * this page relays {cmd:'trigger'} over channel 6, and the main
+   * panel (which holds all the state) executes it like a hotkey.
+   * ============================================================ */
+  var params = new URLSearchParams(location.search);
+  var triggerCmd = params.get('cmd');
+  if (triggerCmd) {
+    $('main-view').classList.add('hidden');
+    var tv = $('trigger-view');
+    tv.classList.remove('hidden');
+    tv.textContent = 'Sending "' + triggerCmd + '"…';
+    var tconn = SSNLink.connectControl({
+      onStatus: function (state) {
+        if (state === 'connected') {
+          tconn.send({ cmd: 'trigger', action: triggerCmd });
+          tv.textContent = 'Sent: ' + triggerCmd + ' ✓ — you can close this tab.';
+          setTimeout(function () { window.close(); }, 900);
+        }
+        if (state === 'no-session') tv.textContent = 'No session ID saved. Open the panel normally first.';
+      }
+    });
+    return; // trigger pages do nothing else
+  }
+
+  /* ============================================================
+   * State
+   * ============================================================ */
+  var liveWidget = null; // 'poll' | 'cloud' | 'wheel' | null
+  var poll = { live: false, ended: false, options: [], votes: {}, counts: [] };
+  var cloud = { live: false, msgCount: 0, counts: {} };
+  var wheel = { entries: [], seen: {}, lastWinner: null };
+
+  var control = null;
+
+  /* ============================================================
+   * Session + connections
+   * ============================================================ */
+  $('session-input').value = SSNLink.session || '';
+
+  // Build the Stream Deck HTTP URLs for whatever session is set now.
+  var SD_ACTIONS = [
+    ['poll-live', 'launch the poll'],
+    ['poll-end', 'end the poll'],
+    ['cloud-live', 'start the word cloud'],
+    ['cloud-clear', 'clear the word cloud'],
+    ['spin', 'spin the wheel'],
+    ['wheel-reset', 'reset the wheel'],
+    ['hide', 'hide the overlay']
+  ];
+  function renderSdUrls() {
+    var box = $('sd-urls');
+    box.innerHTML = '';
+    var sess = SSNLink.session;
+    if (!sess) {
+      box.innerHTML = '<span class="sd-hint">Set the session ID above to generate your URLs.</span>';
+      return;
+    }
+    SD_ACTIONS.forEach(function (a) {
+      var url = 'https://io.socialstream.ninja/' + sess + '/trigger/null/' + a[0] + '?channel=6';
+      var el = document.createElement('div');
+      el.className = 'sd-url';
+      el.innerHTML = '<b>' + a[1] + '</b> — ' + url;
+      el.addEventListener('click', function () {
+        navigator.clipboard && navigator.clipboard.writeText(url);
+        el.classList.add('copied');
+        setTimeout(function () { el.classList.remove('copied'); }, 900);
+      });
+      box.appendChild(el);
+    });
+  }
+  renderSdUrls();
+
+  function setDot(id, state) {
+    var el = $(id);
+    el.className = 'dot' + (state === 'connected' ? ' ok' : state === 'no-session' ? '' : ' bad');
+  }
+
+  var chatConn = null;
+  function connect() {
+    if (chatConn) chatConn.close();
+    if (control) control.close();
+    if (!SSNLink.session) { setDot('dot-chat', 'no-session'); setDot('dot-control', 'no-session'); return; }
+
+    chatConn = SSNLink.connectChat({
+      onStatus: function (s) { setDot('dot-chat', s); },
+      onMessage: onChat
+    });
+    control = SSNLink.connectControl({
+      onStatus: function (s) { setDot('dot-control', s); },
+      onMessage: onControl
+    });
+  }
+
+  $('btn-session').addEventListener('click', function () {
+    SSNLink.setSession($('session-input').value);
+    renderSdUrls();
+    connect();
+    toast('Connecting to session "' + SSNLink.session + '"');
+  });
+  $('session-input').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') $('btn-session').click();
+  });
+
+  function send(obj) {
+    if (!control) { toast('Set the session ID first'); return false; }
+    var ok = control.send(obj);
+    if (!ok) toast('Relay not connected yet — command queued');
+    return true;
+  }
+
+  /* ============================================================
+   * Incoming chat (channel 4) — feeds poll tally, cloud counters,
+   * and the wheel roster
+   * ============================================================ */
+  function onChat(msg) {
+    // wheel auto-add
+    if ($('wheel-auto').checked && msg.name && !wheel.seen[msg.voterKey]) {
+      wheel.seen[msg.voterKey] = true;
+      if (wheel.entries.indexOf(msg.name) === -1) {
+        wheel.entries.push(msg.name);
+        renderChips();
+      }
+    }
+    // poll tally mirror (same rule as the overlay)
+    if (poll.live && !poll.ended) {
+      var first = (msg.message.trim().replace(/^[^A-Za-z]+/, '').split(/\s+/)[0] || '')
+        .replace(/[^A-Za-z]+$/, '');
+      if (first.length === 1) {
+        var idx = first.toUpperCase().charCodeAt(0) - 65;
+        if (idx >= 0 && idx < poll.options.length) {
+          var prev = poll.votes[msg.voterKey];
+          if (prev !== idx) {
+            if (typeof prev === 'number') poll.counts[prev]--;
+            poll.votes[msg.voterKey] = idx;
+            poll.counts[idx]++;
+            renderTally();
+          }
+        }
+      }
+    }
+    // cloud counters mirror
+    if (cloud.live) {
+      cloud.msgCount++;
+      var text = msg.message.toLowerCase()
+        .replace(/https?:\/\/\S+/g, ' ')
+        .replace(/[^a-z0-9\u00c0-\u024f\u0400-\u04ff' -]/g, ' ');
+      text.split(/\s+/).forEach(function (w) {
+        w = w.replace(/^'+|'+$/g, '');
+        if (w.length >= 3 && w.length <= 24 && !/^\d+$/.test(w)) {
+          cloud.counts[w] = (cloud.counts[w] || 0) + 1;
+        }
+      });
+      renderCloudStats();
+    }
+  }
+
+  /* ============================================================
+   * Incoming control messages (channel 6)
+   * ============================================================ */
+  function onControl(cmd) {
+    if (cmd.cmd === 'overlay:hello') {
+      // an overlay just (re)loaded — resend whatever is live
+      if (liveWidget === 'poll' && poll.live) {
+        send({ cmd: 'poll:start', question: poll.question, options: poll.options,
+               resume: { counts: poll.counts, votes: poll.votes } });
+        if (poll.ended) send({ cmd: 'poll:end' });
+      } else if (liveWidget === 'cloud' && cloud.live) {
+        send({ cmd: 'cloud:start', resume: { counts: cloud.counts } });
+      } else if (liveWidget === 'wheel') {
+        send({ cmd: 'wheel:show', entries: wheel.entries });
+      }
+      return;
+    }
+    if (cmd.cmd === 'trigger') runTrigger(cmd.action);
+    // triggers injected via SSN's HTTP API, e.g. a Stream Deck Website
+    // action doing a background GET to:
+    // https://io.socialstream.ninja/SESSION/trigger/null/spin?channel=6
+    if (!cmd.cmd && cmd.action === 'trigger' && cmd.value) runTrigger(String(cmd.value));
+  }
+
+  function runTrigger(action) {
+    switch (action) {
+      case 'spin':        spinWheel(); break;
+      case 'hide':        hideOverlay(); break;
+      case 'poll-live':   goLivePoll(); break;
+      case 'poll-end':    endPoll(); break;
+      case 'cloud-live':  goLiveCloud(); break;
+      case 'cloud-clear': clearCloud(); break;
+      case 'wheel-reset': resetWheel(); break;
+      default: toast('Unknown trigger: ' + action);
+    }
+  }
+
+  /* ============================================================
+   * Tabs
+   * ============================================================ */
+  var TABS = ['poll', 'cloud', 'wheel'];
+  function switchTab(name) {
+    TABS.forEach(function (t) {
+      $('tab-' + t).classList.toggle('active', t === name);
+      $('panel-' + t).classList.toggle('hidden', t !== name);
+    });
+  }
+  TABS.forEach(function (t) {
+    $('tab-' + t).addEventListener('click', function () { switchTab(t); });
+  });
+
+  function setAir(widget) {
+    liveWidget = widget;
+    TABS.forEach(function (t) {
+      $('air-' + t).classList.toggle('hidden', t !== widget);
+    });
+  }
+
+  function hideOverlay() {
+    send({ cmd: 'hide' });
+    if (liveWidget === 'poll') poll.live = false;
+    if (liveWidget === 'cloud') { cloud.live = false; $('btn-cloud-clear').disabled = true; }
+    setAir(null);
+    $('poll-tally').classList.add('hidden');
+    $('btn-poll-end').disabled = true;
+    toast('Overlay cleared');
+  }
+  $('btn-hide').addEventListener('click', hideOverlay);
+
+  /* ============================================================
+   * Poll
+   * ============================================================ */
+  function optionInputs() {
+    return Array.prototype.slice.call(document.querySelectorAll('#poll-opts input'));
+  }
+
+  function addOptionRow(value) {
+    var count = optionInputs().length;
+    if (count >= 6) return;
+    var row = document.createElement('div');
+    row.className = 'opt-row';
+    row.innerHTML =
+      '<div class="opt-letter"></div>' +
+      '<input type="text" maxlength="60" placeholder="Option text">' +
+      '<button class="ghost rm" title="Remove option">✕</button>';
+    row.querySelector('input').value = value || '';
+    row.querySelector('.rm').addEventListener('click', function () {
+      if (optionInputs().length <= 2) { toast('A poll needs at least 2 options'); return; }
+      row.remove();
+      relabelOptions();
+    });
+    $('poll-opts').appendChild(row);
+    relabelOptions();
+  }
+
+  function relabelOptions() {
+    var rows = document.querySelectorAll('#poll-opts .opt-row');
+    rows.forEach(function (row, i) {
+      row.querySelector('.opt-letter').textContent = String.fromCharCode(65 + i);
+    });
+    $('btn-add-opt').disabled = rows.length >= 6;
+  }
+
+  addOptionRow(); addOptionRow(); // start with A and B
+
+  $('btn-add-opt').addEventListener('click', function () { addOptionRow(); });
+
+  $('btn-poll-new').addEventListener('click', function () {
+    $('poll-q').value = '';
+    $('poll-opts').innerHTML = '';
+    addOptionRow(); addOptionRow();
+    poll = { live: false, ended: false, options: [], votes: {}, counts: [] };
+    $('poll-tally').classList.add('hidden');
+    $('btn-poll-end').disabled = true;
+    if (liveWidget === 'poll') setAir(null);
+  });
+
+  function goLivePoll() {
+    var q = $('poll-q').value.trim();
+    var opts = optionInputs().map(function (i) { return i.value.trim(); }).filter(Boolean);
+    if (!q) { toast('Type a question first'); switchTab('poll'); return; }
+    if (opts.length < 2) { toast('A poll needs at least 2 options'); switchTab('poll'); return; }
+
+    poll.question = q;
+    poll.options = opts;
+    poll.votes = {};
+    poll.counts = opts.map(function () { return 0; });
+    poll.live = true;
+    poll.ended = false;
+
+    send({ cmd: 'poll:start', question: q, options: opts });
+    setAir('poll');
+    switchTab('poll');
+    $('btn-poll-end').disabled = false;
+    buildTally();
+    toast('Poll is live');
+  }
+  $('btn-poll-live').addEventListener('click', goLivePoll);
+
+  function endPoll() {
+    if (!poll.live || poll.ended) return;
+    poll.ended = true;
+    send({ cmd: 'poll:end' });
+    $('btn-poll-end').disabled = true;
+    toast('Poll ended — final result frozen on overlay');
+  }
+  $('btn-poll-end').addEventListener('click', endPoll);
+
+  function buildTally() {
+    var box = $('tally-rows');
+    box.innerHTML = '';
+    poll.options.forEach(function (label, i) {
+      var row = document.createElement('div');
+      row.className = 'tally-row';
+      row.innerHTML =
+        '<span class="tl">' + String.fromCharCode(65 + i) + '</span>' +
+        '<div class="tally-bar"><div class="tally-fill" id="tf-' + i + '"></div></div>' +
+        '<span class="tally-n" id="tn-' + i + '">0</span>';
+      box.appendChild(row);
+    });
+    $('poll-tally').classList.remove('hidden');
+    renderTally();
+  }
+
+  function renderTally() {
+    var total = poll.counts.reduce(function (a, b) { return a + b; }, 0);
+    poll.options.forEach(function (_, i) {
+      var pct = total ? Math.round(poll.counts[i] / total * 100) : 0;
+      $('tf-' + i).style.width = pct + '%';
+      $('tn-' + i).textContent = poll.counts[i] + ' · ' + pct + '%';
+    });
+    $('tally-total').textContent = total + (total === 1 ? ' vote' : ' votes');
+  }
+
+  /* ============================================================
+   * Word cloud
+   * ============================================================ */
+  function goLiveCloud() {
+    cloud = { live: true, msgCount: 0, counts: {} };
+    send({ cmd: 'cloud:start' });
+    setAir('cloud');
+    switchTab('cloud');
+    $('btn-cloud-clear').disabled = false;
+    renderCloudStats();
+    toast('Word cloud is live');
+  }
+  $('btn-cloud-live').addEventListener('click', goLiveCloud);
+
+  function clearCloud() {
+    if (!cloud.live) return;
+    cloud.msgCount = 0;
+    cloud.counts = {};
+    send({ cmd: 'cloud:clear' });
+    renderCloudStats();
+    toast('Cloud cleared');
+  }
+  $('btn-cloud-clear').addEventListener('click', clearCloud);
+
+  function renderCloudStats() {
+    $('cloud-msg-count').textContent = cloud.msgCount;
+    var words = Object.keys(cloud.counts);
+    $('cloud-word-count').textContent = words.length;
+    var top = words.map(function (w) { return [w, cloud.counts[w]]; })
+      .sort(function (a, b) { return b[1] - a[1]; }).slice(0, 10);
+    $('cloud-top').innerHTML = top.length
+      ? 'Top words: ' + top.map(function (e) {
+          var b = document.createElement('b'); b.textContent = e[0];
+          return b.outerHTML + ' (' + e[1] + ')';
+        }).join(' · ')
+      : 'The cloud fills up from every chat message once it\'s live. Common filler words are filtered out automatically.';
+  }
+
+  /* ============================================================
+   * Wheel
+   * ============================================================ */
+  function renderChips() {
+    var box = $('wheel-chips');
+    box.innerHTML = '';
+    if (!wheel.entries.length) {
+      box.innerHTML = '<span class="chips-empty">No entries yet. Chatters are added automatically, or add names below.</span>';
+      return;
+    }
+    wheel.entries.forEach(function (name, i) {
+      var chip = document.createElement('span');
+      chip.className = 'chip';
+      var text = document.createElement('span');
+      text.textContent = name;
+      var rm = document.createElement('button');
+      rm.textContent = '✕';
+      rm.title = 'Remove ' + name;
+      rm.addEventListener('click', function () {
+        wheel.entries.splice(i, 1);
+        renderChips();
+      });
+      chip.appendChild(text);
+      chip.appendChild(rm);
+      box.appendChild(chip);
+    });
+  }
+
+  function addWheelName() {
+    var name = $('wheel-add-input').value.trim();
+    if (!name) return;
+    if (wheel.entries.indexOf(name) !== -1) { toast('"' + name + '" is already on the wheel'); return; }
+    wheel.entries.push(name);
+    $('wheel-add-input').value = '';
+    renderChips();
+  }
+  $('btn-wheel-add').addEventListener('click', addWheelName);
+  $('wheel-add-input').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') addWheelName();
+  });
+
+  $('btn-wheel-show').addEventListener('click', function () {
+    if (!wheel.entries.length) { toast('Add at least one name first'); return; }
+    send({ cmd: 'wheel:show', entries: wheel.entries });
+    setAir('wheel');
+    switchTab('wheel');
+    toast('Wheel is on the overlay');
+  });
+
+  function spinWheel() {
+    if (wheel.entries.length < 2) { toast('Need at least 2 entries to spin'); switchTab('wheel'); return; }
+    var winnerIndex = Math.floor(Math.random() * wheel.entries.length);
+    var jitter = (Math.random() * 0.7) - 0.35; // stay inside the slice
+    send({ cmd: 'wheel:spin', entries: wheel.entries, winnerIndex: winnerIndex, jitter: jitter });
+    setAir('wheel');
+    switchTab('wheel');
+    wheel.lastWinner = wheel.entries[winnerIndex];
+    var note = $('wheel-winner-note');
+    note.classList.remove('hidden');
+    note.textContent = 'Spinning… winner will be ' + wheel.lastWinner;
+    setTimeout(function () {
+      if (wheel.lastWinner) note.textContent = '🎉 Winner: ' + wheel.lastWinner;
+    }, 6500);
+  }
+  $('btn-wheel-spin').addEventListener('click', spinWheel);
+
+  function resetWheel() {
+    send({ cmd: 'wheel:reset' });
+    wheel.lastWinner = null;
+    $('wheel-winner-note').classList.add('hidden');
+    if (liveWidget === 'wheel') setAir(null);
+    toast('Wheel reset — overlay cleared');
+  }
+  $('btn-wheel-reset').addEventListener('click', resetWheel);
+
+  /* ============================================================
+   * Keyboard shortcuts (Stream Deck Hotkey actions land here)
+   * ============================================================ */
+  document.addEventListener('keydown', function (e) {
+    var tag = (e.target.tagName || '').toLowerCase();
+    if (tag === 'input' || tag === 'textarea' || e.metaKey || e.ctrlKey || e.altKey) {
+      if (e.key === 'Escape') e.target.blur();
+      return;
+    }
+    switch (e.key.toLowerCase()) {
+      case '1': switchTab('poll'); break;
+      case '2': switchTab('cloud'); break;
+      case '3': switchTab('wheel'); break;
+      case 'p': goLivePoll(); break;
+      case 'w': goLiveCloud(); break;
+      case 'c': clearCloud(); break;
+      case 's': spinWheel(); break;
+      case 'r': resetWheel(); break;
+      case 'h': case 'escape': hideOverlay(); break;
+    }
+  });
+
+  /* ============================================================
+   * Toast
+   * ============================================================ */
+  var toastTimer = null;
+  function toast(msg) {
+    var t = $('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.classList.remove('show'); }, 2400);
+  }
+
+  /* go */
+  connect();
+})();
+</script>
+</body>
+</html>

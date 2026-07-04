@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Webinar overlay</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --card: rgba(18, 20, 25, 0.92);
+    --card-soft: rgba(255, 255, 255, 0.07);
+    --text: #ffffff;
+    --text-dim: rgba(255, 255, 255, 0.55);
+    --accent: #1D9E75;
+    --accent-soft: rgba(29, 158, 117, 0.25);
+    --radius: 18px;
+    --font: 'Archivo', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    background: transparent;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: var(--font);
+    color: var(--text);
+  }
+
+  .stage {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 34px 38px;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+    animation: card-in 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.05) both;
+  }
+  .card.leaving { animation: card-out 0.3s ease-in both; }
+
+  @keyframes card-in {
+    from { opacity: 0; transform: translateY(24px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes card-out {
+    from { opacity: 1; transform: translateY(0) scale(1); }
+    to   { opacity: 0; transform: translateY(16px) scale(0.97); }
+  }
+
+  .hidden { display: none !important; }
+
+  /* ---------- Poll ---------- */
+  #poll-card { width: min(680px, 90vw); }
+
+  .poll-question {
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 1.25;
+    margin-bottom: 24px;
+    letter-spacing: -0.01em;
+  }
+
+  .poll-row {
+    display: grid;
+    grid-template-columns: 44px 1fr 64px;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+
+  .poll-letter {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    background: var(--card-soft);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 800;
+    transition: background 0.4s, color 0.4s;
+  }
+  .poll-row.leading .poll-letter { background: var(--accent); color: #06120d; }
+
+  .poll-track { min-width: 0; }
+  .poll-label {
+    font-size: 17px; font-weight: 600;
+    margin-bottom: 7px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .poll-bar {
+    height: 14px;
+    border-radius: 7px;
+    background: var(--card-soft);
+    overflow: hidden;
+  }
+  .poll-fill {
+    height: 100%;
+    width: 0%;
+    border-radius: 7px;
+    background: rgba(255, 255, 255, 0.42);
+    transition: width 0.65s cubic-bezier(0.25, 0.9, 0.3, 1), background 0.4s;
+  }
+  .poll-row.leading .poll-fill { background: var(--accent); }
+
+  .poll-pct {
+    font-size: 18px; font-weight: 700;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-dim);
+    transition: color 0.4s;
+  }
+  .poll-row.leading .poll-pct { color: var(--accent); }
+
+  .poll-footer {
+    margin-top: 22px;
+    padding-top: 18px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 15px;
+    color: var(--text-dim);
+    display: flex;
+    justify-content: space-between;
+    font-weight: 500;
+  }
+  .poll-footer .votes { color: var(--text); font-weight: 700; }
+  .poll-footer.final .hint { color: var(--accent); font-weight: 700; }
+
+  /* ---------- Word cloud ---------- */
+  #cloud-card {
+    width: min(880px, 92vw);
+    min-height: 320px;
+    display: flex;
+    flex-direction: column;
+  }
+  .cloud-title {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 20px;
+  }
+  .cloud-words {
+    flex: 1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    align-content: center;
+    gap: 6px 18px;
+    min-height: 220px;
+  }
+  .cloud-word {
+    font-weight: 700;
+    line-height: 1.1;
+    color: rgba(255, 255, 255, 0.82);
+    animation: word-in 0.4s ease-out both;
+    transition: font-size 0.5s ease, color 0.5s ease;
+  }
+  .cloud-word.hot { color: var(--accent); }
+  @keyframes word-in {
+    from { opacity: 0; transform: scale(0.6); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+  .cloud-empty {
+    font-size: 20px;
+    color: var(--text-dim);
+    font-weight: 500;
+  }
+
+  /* ---------- Wheel ---------- */
+  #wheel-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 30px 46px 34px;
+  }
+  .wheel-wrap {
+    position: relative;
+    width: min(440px, 72vh);
+    aspect-ratio: 1;
+  }
+  .wheel-pointer {
+    position: absolute;
+    top: -6px; left: 50%;
+    transform: translateX(-50%);
+    width: 0; height: 0;
+    border-left: 15px solid transparent;
+    border-right: 15px solid transparent;
+    border-top: 24px solid var(--accent);
+    filter: drop-shadow(0 3px 6px rgba(0,0,0,0.5));
+    z-index: 2;
+  }
+  #wheel-svg { width: 100%; height: 100%; display: block; }
+  #wheel-rotor { transform-origin: 200px 200px; }
+  #wheel-rotor.spinning {
+    transition: transform 6.4s cubic-bezier(0.12, 0.82, 0.16, 1);
+  }
+  .wheel-winner {
+    margin-top: 24px;
+    text-align: center;
+    animation: card-in 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.1) both;
+  }
+  .wheel-winner .ww-label {
+    font-size: 14px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .wheel-winner .ww-name {
+    font-size: 40px;
+    font-weight: 800;
+    color: var(--accent);
+    letter-spacing: -0.01em;
+  }
+
+  /* ---------- Connection pill (only shows when something is down) ---------- */
+  #conn-pill {
+    position: fixed;
+    right: 14px; bottom: 14px;
+    background: var(--card);
+    color: var(--text-dim);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 7px 12px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  #conn-pill::before {
+    content: '';
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #e0a53a;
+    animation: pulse 1.2s infinite;
+  }
+  @keyframes pulse { 50% { opacity: 0.3; } }
+
+  #setup-card {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(8, 9, 12, 0.82);
+  }
+  #setup-card.show { display: flex; }
+  .setup-inner {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 32px 36px;
+    max-width: 460px;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.5);
+  }
+  .setup-inner h2 { font-size: 22px; font-weight: 800; margin-bottom: 10px; }
+  .setup-inner p { color: var(--text-dim); font-size: 15px; line-height: 1.5; margin-bottom: 16px; }
+  .setup-note { font-size: 13px !important; margin-bottom: 0 !important; }
+  .setup-row { display: flex; gap: 8px; margin-bottom: 16px; }
+  .setup-row input {
+    flex: 1;
+    font: inherit;
+    font-size: 15px;
+    padding: 11px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.06);
+    color: #fff;
+  }
+  .setup-row input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .setup-row button {
+    font: inherit;
+    font-weight: 700;
+    font-size: 15px;
+    border: none;
+    border-radius: 10px;
+    padding: 11px 20px;
+    background: var(--accent);
+    color: #06120d;
+    cursor: pointer;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card, .cloud-word, .wheel-winner { animation-duration: 0.01s; }
+    #wheel-rotor.spinning { transition-duration: 1.2s; }
+    .poll-fill { transition-duration: 0.2s; }
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <!-- Poll -->
+  <div id="poll-card" class="card hidden">
+    <div class="poll-question" id="poll-question"></div>
+    <div id="poll-rows"></div>
+    <div class="poll-footer" id="poll-footer">
+      <span><span class="votes" id="poll-count">0</span> <span id="poll-count-word">votes</span></span>
+      <span class="hint" id="poll-hint"></span>
+    </div>
+  </div>
+
+  <!-- Word cloud -->
+  <div id="cloud-card" class="card hidden">
+    <div class="cloud-title">Live from the chat</div>
+    <div class="cloud-words" id="cloud-words">
+      <div class="cloud-empty">Waiting for the first messages…</div>
+    </div>
+  </div>
+
+  <!-- Wheel -->
+  <div id="wheel-card" class="card hidden">
+    <div class="wheel-wrap">
+      <div class="wheel-pointer"></div>
+      <svg id="wheel-svg" viewBox="0 0 400 400">
+        <g id="wheel-rotor"></g>
+        <circle cx="200" cy="200" r="26" fill="rgba(18,20,25,0.95)" stroke="rgba(255,255,255,0.25)" stroke-width="2"/>
+      </svg>
+    </div>
+    <div class="wheel-winner hidden" id="wheel-winner">
+      <div class="ww-label">Winner</div>
+      <div class="ww-name" id="wheel-winner-name"></div>
+    </div>
+  </div>
+</div>
+
+<div id="conn-pill" class="hidden">reconnecting</div>
+
+<div id="setup-card">
+  <div class="setup-inner">
+    <h2>One-time setup</h2>
+    <p>No SSN session ID saved in this browser yet. Paste it below and this overlay will remember it. You'll only see this once per machine.</p>
+    <div class="setup-row">
+      <input id="setup-input" type="text" placeholder="your SSN session ID" spellcheck="false" autocomplete="off">
+      <button id="setup-save">Save</button>
+    </div>
+    <p class="setup-note">Tip: this is the same ID from Social Stream Ninja's Session Options. Inside OBS you normally won't hit this screen, because you'll set the ID here in a normal browser tab first.</p>
+  </div>
+</div>
+
+<script src="ssn-link.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  /* ============================================================
+   * State
+   * ============================================================ */
+  var active = null; // 'poll' | 'cloud' | 'wheel' | null
+
+  var poll = { question: '', options: [], counts: [], votes: {}, ended: false };
+  var cloud = { counts: {}, dirty: false };
+  var wheel = { entries: [], rotation: 0 };
+
+  /* ============================================================
+   * Widget switching
+   * ============================================================ */
+  var cards = { poll: $('poll-card'), cloud: $('cloud-card'), wheel: $('wheel-card') };
+
+  function show(widget) {
+    for (var k in cards) cards[k].classList.toggle('hidden', k !== widget);
+    if (widget) {
+      cards[widget].classList.remove('leaving');
+      // retrigger entrance animation
+      void cards[widget].offsetWidth;
+    }
+    active = widget;
+  }
+
+  function hideAll() {
+    if (!active) return;
+    var card = cards[active];
+    var was = active;
+    active = null;
+    card.classList.add('leaving');
+    setTimeout(function () {
+      card.classList.add('hidden');
+      card.classList.remove('leaving');
+    }, 300);
+  }
+
+  /* ============================================================
+   * Poll
+   * ============================================================ */
+  function startPoll(cfg) {
+    poll.question = cfg.question || '';
+    poll.options = (cfg.options || []).slice(0, 6);
+    poll.counts = poll.options.map(function () { return 0; });
+    poll.votes = {};
+    poll.ended = false;
+
+    // resync support: control panel can hand back the tally it has
+    if (cfg.resume && Array.isArray(cfg.resume.counts)) {
+      poll.counts = cfg.resume.counts.slice(0, poll.options.length);
+      poll.votes = cfg.resume.votes || {};
+    }
+
+    $('poll-question').textContent = poll.question;
+    var rows = $('poll-rows');
+    rows.innerHTML = '';
+    poll.options.forEach(function (label, i) {
+      var letter = String.fromCharCode(65 + i);
+      var row = document.createElement('div');
+      row.className = 'poll-row';
+      row.id = 'poll-row-' + i;
+      row.innerHTML =
+        '<div class="poll-letter">' + letter + '</div>' +
+        '<div class="poll-track">' +
+          '<div class="poll-label"></div>' +
+          '<div class="poll-bar"><div class="poll-fill" id="poll-fill-' + i + '"></div></div>' +
+        '</div>' +
+        '<div class="poll-pct" id="poll-pct-' + i + '">0%</div>';
+      row.querySelector('.poll-label').textContent = label;
+      rows.appendChild(row);
+    });
+
+    var letters = poll.options.map(function (_, i) { return String.fromCharCode(65 + i); });
+    var hint = letters.length > 1
+      ? letters.slice(0, -1).join(', ') + ' or ' + letters[letters.length - 1]
+      : letters[0];
+    $('poll-hint').textContent = 'type ' + hint + ' in chat';
+    $('poll-footer').classList.remove('final');
+
+    renderPoll();
+    show('poll');
+  }
+
+  function handleVote(msg) {
+    if (active !== 'poll' || poll.ended) return;
+    var text = msg.message.trim();
+    if (!text) return;
+    // strip surrounding punctuation, take the first word
+    var firstWord = (text.replace(/^[^A-Za-z]+/, '').split(/\s+/)[0] || '')
+      .replace(/[^A-Za-z]+$/, '');
+    // count it only if the first word is exactly one letter — this keeps
+    // "A" and "b!" as votes but ignores sentences that happen to start with A
+    if (firstWord.length !== 1) return;
+    var idx = firstWord.toUpperCase().charCodeAt(0) - 65;
+    if (idx < 0 || idx >= poll.options.length) return;
+
+    var prev = poll.votes[msg.voterKey];
+    if (prev === idx) return;
+    if (typeof prev === 'number') poll.counts[prev]--; // changed their vote
+    poll.votes[msg.voterKey] = idx;
+    poll.counts[idx]++;
+    renderPoll();
+  }
+
+  function renderPoll() {
+    var total = poll.counts.reduce(function (a, b) { return a + b; }, 0);
+    var max = Math.max.apply(null, poll.counts.concat(1));
+    poll.options.forEach(function (_, i) {
+      var pct = total ? Math.round(poll.counts[i] / total * 100) : 0;
+      $('poll-fill-' + i).style.width = pct + '%';
+      $('poll-pct-' + i).textContent = pct + '%';
+      var leading = total > 0 && poll.counts[i] === max;
+      $('poll-row-' + i).classList.toggle('leading', leading);
+    });
+    $('poll-count').textContent = total;
+    $('poll-count-word').textContent = total === 1 ? 'vote' : 'votes';
+  }
+
+  function endPoll() {
+    poll.ended = true;
+    $('poll-hint').textContent = 'final result';
+    $('poll-footer').classList.add('final');
+  }
+
+  /* ============================================================
+   * Word cloud
+   * ============================================================ */
+  var STOPWORDS = new Set(('a,an,and,are,as,at,be,been,but,by,can,could,did,do,does,for,from,had,has,have,he,her,hers,him,his,how,i,if,in,into,is,it,its,just,like,me,my,no,not,of,on,or,our,out,so,she,that,the,their,them,then,there,they,this,to,too,us,was,we,were,what,when,which,who,why,will,with,would,you,your,yours,im,its,dont,cant,thats,youre,were,ive,id,also,get,got,really,very,much,lol,haha,yes,yeah,yep,no,nope,ok,okay,hi,hello,hey,thanks,thank,please,one,two,about,all,am,any,because,here,more,now,some,than,up,down,over,under,again,only,other,while,being,before,after,such,each,few,most,own,same').split(','));
+
+  function startCloud(cmd) {
+    cloud.counts = (cmd && cmd.resume && cmd.resume.counts) ? cmd.resume.counts : {};
+    renderCloud();
+    show('cloud');
+  }
+
+  function clearCloud() {
+    cloud.counts = {};
+    renderCloud();
+  }
+
+  function feedCloud(msg) {
+    if (active !== 'cloud') return;
+    var text = msg.message.toLowerCase()
+      .replace(/https?:\/\/\S+/g, ' ')
+      .replace(/[^a-z0-9\u00c0-\u024f\u0400-\u04ff' -]/g, ' ');
+    var words = text.split(/\s+/);
+    var added = false;
+    words.forEach(function (w) {
+      w = w.replace(/^'+|'+$/g, '');
+      if (w.length < 3 || w.length > 24) return;
+      if (STOPWORDS.has(w)) return;
+      if (/^\d+$/.test(w)) return;
+      cloud.counts[w] = (cloud.counts[w] || 0) + 1;
+      added = true;
+    });
+    if (added) cloud.dirty = true;
+  }
+
+  // throttle re-layout so a busy chat doesn't thrash the DOM
+  setInterval(function () {
+    if (cloud.dirty && active === 'cloud') {
+      cloud.dirty = false;
+      renderCloud();
+    }
+  }, 600);
+
+  function renderCloud() {
+    var box = $('cloud-words');
+    var entries = Object.keys(cloud.counts).map(function (w) {
+      return [w, cloud.counts[w]];
+    }).sort(function (a, b) { return b[1] - a[1]; }).slice(0, 60);
+
+    if (!entries.length) {
+      box.innerHTML = '<div class="cloud-empty">Waiting for the first messages…</div>';
+      return;
+    }
+
+    var maxN = entries[0][1];
+    var top3 = entries.slice(0, 3).map(function (e) { return e[0]; });
+
+    // stable-ish placement: interleave big words toward the middle
+    var ordered = [];
+    entries.forEach(function (e, i) {
+      if (i % 2 === 0) ordered.push(e); else ordered.unshift(e);
+    });
+
+    box.innerHTML = '';
+    ordered.forEach(function (e) {
+      var el = document.createElement('span');
+      el.className = 'cloud-word' + (top3.indexOf(e[0]) !== -1 ? ' hot' : '');
+      var scale = Math.sqrt(e[1] / maxN); // 0..1
+      el.style.fontSize = Math.round(15 + scale * 38) + 'px';
+      el.textContent = e[0];
+      box.appendChild(el);
+    });
+  }
+
+  /* ============================================================
+   * Wheel
+   * ============================================================ */
+  var WHEEL_FILLS = ['#1D9E75', '#2b3038', '#157a5b', '#3a404b', '#12684e', '#232830'];
+
+  function drawWheel(entries) {
+    wheel.entries = entries.slice();
+    var rotor = $('wheel-rotor');
+    rotor.classList.remove('spinning');
+    rotor.style.transform = 'rotate(0deg)';
+    wheel.rotation = 0;
+    rotor.innerHTML = '';
+
+    var n = entries.length;
+    if (!n) return;
+    var cx = 200, cy = 200, r = 192;
+    var seg = 360 / n;
+
+    for (var i = 0; i < n; i++) {
+      // segment i spans [i*seg, (i+1)*seg) clockwise from 12 o'clock
+      var a0 = deg2rad(i * seg - 90);
+      var a1 = deg2rad((i + 1) * seg - 90);
+      var x0 = cx + r * Math.cos(a0), y0 = cy + r * Math.sin(a0);
+      var x1 = cx + r * Math.cos(a1), y1 = cy + r * Math.sin(a1);
+      var largeArc = seg > 180 ? 1 : 0;
+
+      var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      if (n === 1) {
+        path.setAttribute('d', 'M ' + cx + ' ' + cy + ' m -' + r + ',0 a ' + r + ',' + r + ' 0 1,0 ' + (r * 2) + ',0 a ' + r + ',' + r + ' 0 1,0 -' + (r * 2) + ',0');
+      } else {
+        path.setAttribute('d',
+          'M ' + cx + ' ' + cy +
+          ' L ' + x0.toFixed(2) + ' ' + y0.toFixed(2) +
+          ' A ' + r + ' ' + r + ' 0 ' + largeArc + ' 1 ' + x1.toFixed(2) + ' ' + y1.toFixed(2) +
+          ' Z');
+      }
+      // avoid same color on adjacent segments when count isn't a multiple
+      var fillIdx = i % WHEEL_FILLS.length;
+      if (n % WHEEL_FILLS.length === 1 && i === n - 1 && n > 1) fillIdx = 1;
+      path.setAttribute('fill', WHEEL_FILLS[fillIdx]);
+      path.setAttribute('stroke', 'rgba(18,20,25,0.9)');
+      path.setAttribute('stroke-width', '2');
+      rotor.appendChild(path);
+
+      // label along the segment's bisector
+      var mid = (i + 0.5) * seg - 90;
+      var tx = cx + (r * 0.62) * Math.cos(deg2rad(mid));
+      var ty = cy + (r * 0.62) * Math.sin(deg2rad(mid));
+      var label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      label.setAttribute('x', tx.toFixed(2));
+      label.setAttribute('y', ty.toFixed(2));
+      label.setAttribute('fill', '#ffffff');
+      label.setAttribute('font-size', n > 12 ? '13' : n > 8 ? '15' : '18');
+      label.setAttribute('font-weight', '700');
+      label.setAttribute('font-family', "'Archivo', system-ui, sans-serif");
+      label.setAttribute('text-anchor', 'middle');
+      label.setAttribute('dominant-baseline', 'middle');
+      label.setAttribute('transform', 'rotate(' + (mid + (Math.cos(deg2rad(mid)) < 0 ? 180 : 0)) + ' ' + tx.toFixed(2) + ' ' + ty.toFixed(2) + ')');
+      label.textContent = truncate(entries[i], n > 10 ? 10 : 14);
+      rotor.appendChild(label);
+    }
+  }
+
+  function deg2rad(d) { return d * Math.PI / 180; }
+  function truncate(s, n) { return s.length > n ? s.slice(0, n - 1) + '…' : s; }
+
+  function showWheel(cmd) {
+    drawWheel(cmd.entries || []);
+    $('wheel-winner').classList.add('hidden');
+    show('wheel');
+  }
+
+  function spinWheel(cmd) {
+    // redraw with the exact entry snapshot the panel used, so the
+    // winnerIndex always points at the right slice
+    drawWheel(cmd.entries || []);
+    $('wheel-winner').classList.add('hidden');
+    show('wheel');
+
+    var n = wheel.entries.length;
+    if (!n || typeof cmd.winnerIndex !== 'number') return;
+    var seg = 360 / n;
+    var center = (cmd.winnerIndex + 0.5) * seg;
+    var jitter = typeof cmd.jitter === 'number' ? cmd.jitter : 0; // -0.35..0.35 of a segment
+    var target = 5 * 360 + (360 - center) + jitter * seg;
+
+    var rotor = $('wheel-rotor');
+    // start from a clean 0 so repeated spins behave identically
+    rotor.classList.remove('spinning');
+    rotor.style.transform = 'rotate(0deg)';
+    void rotor.offsetWidth; // force reflow before animating
+    rotor.classList.add('spinning');
+    rotor.style.transform = 'rotate(' + target + 'deg)';
+
+    setTimeout(function () {
+      if (active !== 'wheel') return;
+      $('wheel-winner-name').textContent = wheel.entries[cmd.winnerIndex] || '';
+      $('wheel-winner').classList.remove('hidden');
+    }, matchMedia('(prefers-reduced-motion: reduce)').matches ? 1300 : 6500);
+  }
+
+  /* ============================================================
+   * Wiring: relay connections
+   * ============================================================ */
+  var connState = { chat: 'connecting', control: 'connecting' };
+
+  function onStatus(state, label) {
+    connState[label] = state;
+    var bad = (connState.chat !== 'connected') || (connState.control !== 'connected');
+    $('conn-pill').classList.toggle('hidden', !bad);
+    var msgs = [];
+    if (connState.chat !== 'connected') msgs.push('chat');
+    if (connState.control !== 'connected') msgs.push('control');
+    $('conn-pill').textContent = connState.chat === 'no-session'
+      ? 'no session id — add ?session=YOUR_ID to the URL'
+      : 'reconnecting ' + msgs.join(' + ');
+  }
+
+  var control = null;
+
+  function boot() {
+    control = SSNLink.connectControl({
+      onStatus: onStatus,
+      onMessage: function (cmd) {
+        switch (cmd.cmd) {
+          case 'poll:start':  startPoll(cmd); break;
+          case 'poll:end':    endPoll(); break;
+          case 'cloud:start': startCloud(cmd); break;
+          case 'cloud:clear': clearCloud(); break;
+          case 'wheel:show':  showWheel(cmd); break;
+          case 'wheel:spin':  spinWheel(cmd); break;
+          case 'wheel:reset': hideAll(); break;
+          case 'hide':        hideAll(); break;
+          // 'trigger' and 'overlay:hello' are panel-side; ignore here
+        }
+      }
+    });
+
+    SSNLink.connectChat({
+      onStatus: onStatus,
+      onMessage: function (msg) {
+        handleVote(msg);
+        feedCloud(msg);
+      }
+    });
+
+    // Ask the control panel to resend the current widget. Covers the
+    // "refreshed the browser source mid-webinar" case: the panel answers
+    // with the active widget config, including the poll tally it has.
+    setTimeout(function () { control.send({ cmd: 'overlay:hello' }); }, 800);
+  }
+
+  // First-run setup: if no session is saved on this machine, show a
+  // card to capture it once instead of silently failing.
+  function saveSetupSession() {
+    var id = $('setup-input').value.trim();
+    if (!id) return;
+    SSNLink.setSession(id);
+    $('setup-card').classList.remove('show');
+    boot();
+  }
+  $('setup-save').addEventListener('click', saveSetupSession);
+  $('setup-input').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') saveSetupSession();
+  });
+
+  if (SSNLink.session) {
+    boot();
+  } else {
+    $('setup-card').classList.add('show');
+    $('setup-input').focus();
+  }
+})();
+</script>
+</body>
+</html>
