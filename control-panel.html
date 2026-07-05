@@ -394,7 +394,7 @@
     <button id="tab-wheel" role="tab">Wheel<kbd>5</kbd><span class="on-air hidden" id="air-wheel"></span></button>
     <button id="tab-bullets" role="tab">Bullets<kbd>6</kbd><span class="on-air hidden" id="air-bullets"></span></button>
     <button id="tab-map" role="tab">Map<kbd>7</kbd><span class="on-air hidden" id="air-map"></span></button>
-    <button id="tab-avatars" role="tab">Avatars<kbd>8</kbd><span class="on-air hidden" id="air-avatars"></span></button>
+    <button id="tab-donut" role="tab">Donut<kbd>8</kbd><span class="on-air hidden" id="air-donut"></span></button>
   </div>
 
   <!-- ============ POLL ============ -->
@@ -525,15 +525,24 @@
     <div class="top-words" id="map-detected" style="margin-top:14px;"></div>
   </div>
 
-  <!-- ============ AVATARS ============ -->
-  <div class="panel hidden" id="panel-avatars">
+  <!-- ============ DONUT POLL ============ -->
+  <div class="panel hidden" id="panel-donut">
     <p style="font-size:14px; color:var(--ink-soft); line-height:1.6; margin-bottom:16px;">
-      Everyone who sends a chat message pops up as a floating bubble with their name, and their photo when the platform provides one. Newest 12 stay on screen. Nice as a welcome moment at the start.
+      A big translucent ring over the whole scene, with live percentages. Votes work like the poll: people type A, B, C… in chat. One vote per person, changeable.
     </p>
-    <div class="actions" style="margin-top:0; padding-top:0; border-top:none;">
-      <button class="live" id="btn-avatars-live">Go live on overlay</button>
+    <div class="field">
+      <label for="donut-q">Question</label>
+      <input type="text" id="donut-q" placeholder="Should we do a live demo?" maxlength="120">
+    </div>
+    <div class="field">
+      <label>Options (2–6)</label>
+      <div id="donut-opts"></div>
+      <button class="ghost" id="btn-donut-add">+ Add option</button>
+    </div>
+    <div class="actions">
+      <button class="live" id="btn-donut-live">Go live on overlay</button>
       <div class="spacer"></div>
-      <span class="sd-hint" id="avatars-status"></span>
+      <span class="sd-hint" id="donut-status"></span>
     </div>
   </div>
 
@@ -549,7 +558,7 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="ssn-link.js"></script>
+<script src="ssn-link.js?v=5"></script>
 <script>
 (function () {
   'use strict';
@@ -587,12 +596,12 @@
   var liveWidget = null; // 'poll' | 'cloud' | 'wheel' | null
   var poll = { live: false, ended: false, revealed: false, correctIndex: null, firstCorrect: null, options: [], votes: {}, counts: [] };
   var cloud = { live: false, msgCount: 0, counts: {} };
-  var wheel = { entries: [], seen: {}, lastWinner: null };
+  var wheel = { entries: [], seen: {}, lastWinner: null, images: {} };
   var tug = { live: false, decided: false, question: '', options: [], counts: [0, 0], votes: {} };
   var meter = { live: false, question: '', values: {} };
   var bullets = { title: '', items: [], active: 0, shown: false };
   var mapw = { live: false, counts: {}, users: {} };
-  var avat = { live: false };
+  var donut = { live: false, question: '', options: [], counts: [], votes: {} };
   // location matching lives in ssn-link.js (SSNLink.matchLocation)
 
   var control = null;
@@ -618,7 +627,7 @@
     ['bullets-next', 'agenda: next item'],
     ['bullets-prev', 'agenda: previous item'],
     ['map-live', 'launch the world map'],
-    ['avatars-live', 'launch avatar bubbles'],
+    ['donut-live', 'launch the donut poll'],
     ['hide', 'hide the overlay']
   ];
   function renderSdUrls() {
@@ -688,6 +697,9 @@
    * ============================================================ */
   function onChat(msg) {
     // wheel auto-add
+    if (msg.name && msg.raw && (msg.raw.chatimg || msg.raw.chatimage)) {
+      wheel.images[msg.name] = msg.raw.chatimg || msg.raw.chatimage;
+    }
     if ($('wheel-auto').checked && msg.name && !wheel.seen[msg.voterKey]) {
       wheel.seen[msg.voterKey] = true;
       if (wheel.entries.indexOf(msg.name) === -1) {
@@ -710,7 +722,8 @@
             // quiz mode: the first person to hit the right answer keeps
             // first place for good, even if they change their vote later
             if (poll.correctIndex !== null && idx === poll.correctIndex && !poll.firstCorrect) {
-              poll.firstCorrect = { name: msg.name, key: msg.voterKey };
+              poll.firstCorrect = { name: msg.name, key: msg.voterKey,
+                img: (msg.raw && (msg.raw.chatimg || msg.raw.chatimage)) || null };
             }
             renderTally();
           }
@@ -758,6 +771,22 @@
         }
       }
     }
+    // donut votes mirror
+    if (donut.live) {
+      var dw = (msg.message.trim().replace(/^[^A-Za-z]+/, '').split(/\s+/)[0] || '').replace(/[^A-Za-z]+$/, '');
+      if (dw.length === 1) {
+        var di = dw.toUpperCase().charCodeAt(0) - 65;
+        if (di >= 0 && di < donut.options.length) {
+          var dprev = donut.votes[msg.voterKey];
+          if (dprev !== di) {
+            if (typeof dprev === 'number') donut.counts[dprev]--;
+            donut.votes[msg.voterKey] = di;
+            donut.counts[di]++;
+            renderDonutStatus();
+          }
+        }
+      }
+    }
     // cloud counters mirror
     if (cloud.live) {
       cloud.msgCount++;
@@ -785,7 +814,7 @@
                resume: { counts: poll.counts, votes: poll.votes } });
         if (poll.revealed) {
           send({ cmd: 'poll:reveal', correctIndex: poll.correctIndex,
-                 firstCorrect: poll.firstCorrect ? { name: poll.firstCorrect.name } : null });
+                 firstCorrect: poll.firstCorrect ? { name: poll.firstCorrect.name, img: poll.firstCorrect.img || null } : null });
         } else if (poll.ended) {
           send({ cmd: 'poll:end' });
         }
@@ -803,8 +832,9 @@
         send(bulletsPayload());
       } else if (liveWidget === 'map' && mapw.live) {
         send({ cmd: 'map:start', resume: { counts: mapw.counts, users: mapw.users } });
-      } else if (liveWidget === 'avatars' && avat.live) {
-        send({ cmd: 'avatars:start' });
+      } else if (liveWidget === 'donut' && donut.live) {
+        send({ cmd: 'donut:start', question: donut.question, options: donut.options,
+               resume: { counts: donut.counts, votes: donut.votes } });
       }
       return;
     }
@@ -832,7 +862,7 @@
       case 'bullets-next': bulletsStep(1); break;
       case 'bullets-prev': bulletsStep(-1); break;
       case 'map-live':     goLiveMap(); break;
-      case 'avatars-live': goLiveAvatars(); break;
+      case 'donut-live':   goLiveDonut(); break;
       default: toast('Unknown trigger: ' + action);
     }
   }
@@ -840,7 +870,7 @@
   /* ============================================================
    * Tabs
    * ============================================================ */
-  var TABS = ['poll', 'tug', 'meter', 'cloud', 'wheel', 'bullets', 'map', 'avatars'];
+  var TABS = ['poll', 'tug', 'meter', 'cloud', 'wheel', 'bullets', 'map', 'donut'];
   function switchTab(name) {
     TABS.forEach(function (t) {
       $('tab-' + t).classList.toggle('active', t === name);
@@ -856,7 +886,7 @@
     tug.live = false;
     meter.live = false;
     mapw.live = false;
-    avat.live = false;
+    donut.live = false;
     cloud.live = false;
     bullets.shown = false;
     $('btn-cloud-clear').disabled = true;
@@ -992,7 +1022,7 @@
     poll.ended = true;
     poll.revealed = true;
     send({ cmd: 'poll:reveal', correctIndex: poll.correctIndex,
-           firstCorrect: poll.firstCorrect ? { name: poll.firstCorrect.name } : null });
+           firstCorrect: poll.firstCorrect ? { name: poll.firstCorrect.name, img: poll.firstCorrect.img || null } : null });
     $('btn-poll-end').disabled = true;
     $('btn-poll-reveal').disabled = true;
     renderTally();
@@ -1127,7 +1157,8 @@
     if (wheel.entries.length < 2) { toast('Need at least 2 entries to spin'); switchTab('wheel'); return; }
     var winnerIndex = Math.floor(Math.random() * wheel.entries.length);
     var jitter = (Math.random() * 0.7) - 0.35; // stay inside the slice
-    send({ cmd: 'wheel:spin', entries: wheel.entries, winnerIndex: winnerIndex, jitter: jitter });
+    send({ cmd: 'wheel:spin', entries: wheel.entries, winnerIndex: winnerIndex, jitter: jitter,
+           winnerImg: wheel.images[wheel.entries[winnerIndex]] || null });
     setAir('wheel');
     switchTab('wheel');
     wheel.lastWinner = wheel.entries[winnerIndex];
@@ -1277,18 +1308,58 @@
   }
 
   /* ============================================================
-   * Avatars
+   * Donut poll
    * ============================================================ */
-  function goLiveAvatars() {
-    stopAllLive();
-    avat.live = true;
-    send({ cmd: 'avatars:start' });
-    setAir('avatars');
-    switchTab('avatars');
-    $('avatars-status').textContent = 'live';
-    toast('Avatar bubbles are live');
+  function donutInputs() {
+    return Array.prototype.slice.call(document.querySelectorAll('#donut-opts input'));
   }
-  $('btn-avatars-live').addEventListener('click', goLiveAvatars);
+  function addDonutRow(value) {
+    if (donutInputs().length >= 6) return;
+    var row = document.createElement('div');
+    row.className = 'opt-row';
+    row.innerHTML = '<div class="opt-letter"></div>' +
+      '<input type="text" maxlength="40" placeholder="Option text">' +
+      '<button class="ghost rm" title="Remove option">\u2715</button>';
+    row.querySelector('input').value = value || '';
+    row.querySelector('.rm').addEventListener('click', function () {
+      if (donutInputs().length <= 2) { toast('The donut needs at least 2 options'); return; }
+      row.remove();
+      relabelDonut();
+    });
+    $('donut-opts').appendChild(row);
+    relabelDonut();
+  }
+  function relabelDonut() {
+    var rows = document.querySelectorAll('#donut-opts .opt-row');
+    rows.forEach(function (row, i) {
+      row.querySelector('.opt-letter').textContent = String.fromCharCode(65 + i);
+    });
+    $('btn-donut-add').disabled = rows.length >= 6;
+  }
+  addDonutRow('Yes'); addDonutRow('No');
+  $('btn-donut-add').addEventListener('click', function () { addDonutRow(); });
+
+  function goLiveDonut() {
+    var q = $('donut-q').value.trim();
+    var opts = donutInputs().map(function (i) { return i.value.trim(); }).filter(Boolean);
+    if (!q) { toast('Type a question first'); switchTab('donut'); return; }
+    if (opts.length < 2) { toast('The donut needs at least 2 options'); switchTab('donut'); return; }
+    stopAllLive();
+    donut = { live: true, question: q, options: opts, counts: opts.map(function () { return 0; }), votes: {} };
+    send({ cmd: 'donut:start', question: q, options: opts });
+    setAir('donut');
+    switchTab('donut');
+    renderDonutStatus();
+    toast('Donut poll is live');
+  }
+  $('btn-donut-live').addEventListener('click', goLiveDonut);
+
+  function renderDonutStatus() {
+    if (!donut.live) { $('donut-status').textContent = ''; return; }
+    var total = donut.counts.reduce(function (a, b) { return a + b; }, 0);
+    $('donut-status').textContent = total + (total === 1 ? ' vote' : ' votes') + ': ' +
+      donut.options.map(function (o, i) { return String.fromCharCode(65 + i) + ' ' + donut.counts[i]; }).join(' \u00b7 ');
+  }
 
   /* ============================================================
    * Keyboard shortcuts (Stream Deck Hotkey actions land here)

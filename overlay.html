@@ -47,6 +47,21 @@
   }
   .card.leaving { animation: card-out 0.3s ease-in both; }
 
+  /* bottom-half band: shared by poll, tug, meter, cloud, map */
+  .band {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    max-height: 50vh;
+    background: linear-gradient(to top, rgba(12, 14, 18, 0.93) 60%, rgba(12, 14, 18, 0.78));
+    padding: 26px 5vw 30px;
+    box-shadow: 0 -12px 44px rgba(0, 0, 0, 0.35);
+    overflow: hidden;
+    animation: band-in 0.55s cubic-bezier(0.2, 0.9, 0.25, 1) both;
+  }
+  .band.leaving { animation: band-out 0.4s cubic-bezier(0.55, 0, 0.75, 0.4) both; }
+  @keyframes band-in  { from { transform: translateY(105%); } to { transform: translateY(0); } }
+  @keyframes band-out { from { transform: translateY(0); } to { transform: translateY(105%); } }
+
   @keyframes card-in {
     from { opacity: 0; transform: translateY(24px) scale(0.97); }
     to   { opacity: 1; transform: translateY(0) scale(1); }
@@ -58,94 +73,82 @@
 
   .hidden { display: none !important; }
 
-  /* ---------- Poll ---------- */
-  #poll-card { width: min(680px, 90vw); }
-
+  /* ---------- Poll (bottom band, 2-column grid) ---------- */
   .poll-question {
-    font-size: 30px;
+    font-size: clamp(24px, 3vw, 38px);
     font-weight: 700;
-    line-height: 1.25;
-    margin-bottom: 24px;
+    line-height: 1.2;
+    text-align: center;
+    margin-bottom: 26px;
     letter-spacing: -0.01em;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.5);
   }
-
+  #poll-rows {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 6vw;
+    row-gap: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
   .poll-row {
     display: grid;
-    grid-template-columns: 44px 1fr 64px;
+    grid-template-columns: 44px 1fr auto;
+    grid-template-rows: auto auto;
     align-items: center;
-    gap: 14px;
-    margin-bottom: 14px;
+    column-gap: 14px;
+    row-gap: 9px;
   }
-
   .poll-letter {
     width: 44px; height: 44px;
-    border-radius: 12px;
-    background: var(--card-soft);
+    grid-row: 1;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.16);
     display: flex; align-items: center; justify-content: center;
-    font-size: 20px; font-weight: 800;
+    font-size: 21px; font-weight: 800;
     transition: background 0.4s, color 0.4s;
   }
   .poll-row.leading .poll-letter { background: var(--accent); color: #06120d; }
-
-  .poll-track { min-width: 0; }
+  .poll-row.correct .poll-letter { background: var(--gold); color: #3d2e07; }
+  .poll-track { display: contents; }
   .poll-label {
-    font-size: 17px; font-weight: 600;
-    margin-bottom: 7px;
+    grid-row: 1; grid-column: 2;
+    font-size: clamp(17px, 1.7vw, 24px);
+    font-weight: 700;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    text-shadow: 0 1px 6px rgba(0,0,0,0.5);
   }
-  .poll-bar {
-    height: 14px;
-    border-radius: 7px;
-    background: var(--card-soft);
-    overflow: hidden;
-  }
-  .poll-fill {
-    height: 100%;
-    width: 0%;
-    border-radius: 7px;
-    background: rgba(255, 255, 255, 0.42);
-    transition: width 0.65s cubic-bezier(0.25, 0.9, 0.3, 1), background 0.4s;
-  }
-  .poll-row.leading .poll-fill { background: var(--accent); }
-
   .poll-pct {
-    font-size: 18px; font-weight: 700;
-    text-align: right;
+    grid-row: 1; grid-column: 3;
+    font-size: clamp(19px, 1.9vw, 27px);
+    font-weight: 800;
     font-variant-numeric: tabular-nums;
-    color: var(--text-dim);
+    color: #fff;
     transition: color 0.4s;
   }
   .poll-row.leading .poll-pct { color: var(--accent); }
-
-  /* quiz reveal: the correct answer goes gold */
-  .poll-row.correct .poll-letter { background: var(--gold); color: #3d2e07; }
-  .poll-row.correct .poll-fill { background: var(--gold); }
   .poll-row.correct .poll-pct { color: var(--gold); }
-  .poll-row.correct .poll-label::after {
-    content: ' ✓ correct';
-    color: var(--gold);
-    font-size: 13px;
-    font-weight: 800;
-    letter-spacing: 0.04em;
+  .poll-bar {
+    grid-row: 2; grid-column: 1 / -1;
+    height: 10px;
+    border-radius: 5px;
+    background: rgba(255,255,255,0.22);
+    overflow: hidden;
   }
-
-  .poll-first {
-    margin-top: 16px;
-    background: rgba(232, 179, 63, 0.14);
-    border: 1px solid rgba(232, 179, 63, 0.45);
-    border-radius: 12px;
-    padding: 13px 16px;
-    font-size: 16px;
-    font-weight: 700;
-    text-align: center;
-    animation: card-in 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.05) both;
+  .poll-fill {
+    height: 100%; width: 0%;
+    border-radius: 5px;
+    background: rgba(255,255,255,0.85);
+    transition: width 0.65s cubic-bezier(0.25, 0.9, 0.3, 1), background 0.4s;
   }
-  .poll-first b { color: var(--gold); }
+  .poll-row.leading .poll-fill { background: var(--accent); }
+  .poll-row.correct .poll-fill { background: var(--gold); }
 
   .poll-footer {
-    margin-top: 22px;
-    padding-top: 18px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    margin: 22px auto 0;
+    max-width: 1400px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.14);
     font-size: 15px;
     color: var(--text-dim);
     display: flex;
@@ -155,13 +158,39 @@
   .poll-footer .votes { color: var(--text); font-weight: 700; }
   .poll-footer.final .hint { color: var(--accent); font-weight: 700; }
 
-  /* ---------- Word cloud ---------- */
-  #cloud-card {
-    width: min(880px, 92vw);
-    min-height: 320px;
+  /* quiz reveal banner: cup + avatar + name */
+  .poll-first {
+    margin: 18px auto 0;
+    max-width: 700px;
+    background: rgba(232, 179, 63, 0.13);
+    border: 1px solid rgba(232, 179, 63, 0.5);
+    border-radius: 999px;
+    padding: 10px 26px 10px 14px;
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    font-size: 19px;
+    font-weight: 700;
+    animation: card-in 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.05) both;
   }
+  .poll-first b { color: var(--gold); }
+
+  .win-avatar {
+    width: 46px; height: 46px;
+    flex: none;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid var(--gold);
+    background: #2b3038;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 17px;
+  }
+  .win-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .trophy { width: 34px; height: 34px; flex: none; }
+
+  /* ---------- Word cloud ---------- */
+  #cloud-card { display: flex; flex-direction: column; }
   .cloud-title {
     font-size: 15px;
     font-weight: 700;
@@ -178,7 +207,9 @@
     justify-content: center;
     align-content: center;
     gap: 6px 18px;
-    min-height: 220px;
+    min-height: 26vh;
+    max-width: 1400px;
+    margin: 0 auto;
   }
   .cloud-word {
     font-weight: 700;
@@ -199,26 +230,28 @@
     font-weight: 500;
   }
 
-  /* ---------- Wheel ---------- */
+  /* ---------- Wheel (slides in from the right, half off-screen) ---------- */
   #wheel-card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 30px 46px 34px;
-  }
-  .wheel-wrap {
-    position: relative;
-    width: min(440px, 72vh);
+    position: fixed;
+    top: 50%;
+    right: 0;
+    width: min(96vh, 900px);
     aspect-ratio: 1;
+    transform: translate(45%, -50%);
+    animation: wheel-in 0.6s cubic-bezier(0.2, 0.9, 0.25, 1) both;
   }
+  #wheel-card.leaving { animation: wheel-out 0.45s cubic-bezier(0.55, 0, 0.75, 0.4) both; }
+  @keyframes wheel-in  { from { transform: translate(160%, -50%); } to { transform: translate(45%, -50%); } }
+  @keyframes wheel-out { from { transform: translate(45%, -50%); } to { transform: translate(160%, -50%); } }
+  .wheel-wrap { position: relative; width: 100%; height: 100%; filter: drop-shadow(-14px 0 34px rgba(0,0,0,0.5)); }
   .wheel-pointer {
     position: absolute;
-    top: -6px; left: 50%;
-    transform: translateX(-50%);
+    left: -8px; top: 50%;
+    transform: translateY(-50%);
     width: 0; height: 0;
-    border-left: 15px solid transparent;
-    border-right: 15px solid transparent;
-    border-top: 24px solid var(--accent);
+    border-top: 16px solid transparent;
+    border-bottom: 16px solid transparent;
+    border-left: 28px solid var(--accent);
     filter: drop-shadow(0 3px 6px rgba(0,0,0,0.5));
     z-index: 2;
   }
@@ -227,49 +260,66 @@
   #wheel-rotor.spinning {
     transition: transform 6.4s cubic-bezier(0.12, 0.82, 0.16, 1);
   }
+
+  /* winner card: trophy + avatar + name, appears in the free space */
   .wheel-winner {
-    margin-top: 24px;
-    text-align: center;
+    position: fixed;
+    left: 5vw;
+    bottom: 9vh;
+    background: var(--card);
+    border: 1px solid rgba(232, 179, 63, 0.55);
+    border-radius: var(--radius);
+    padding: 20px 30px 20px 22px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.5);
     animation: card-in 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.1) both;
   }
+  .wheel-winner .win-avatar { width: 64px; height: 64px; font-size: 24px; }
   .wheel-winner .ww-label {
-    font-size: 14px;
+    font-size: 13px;
     letter-spacing: 0.16em;
     text-transform: uppercase;
     color: var(--text-dim);
     font-weight: 700;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
   }
   .wheel-winner .ww-name {
-    font-size: 40px;
+    font-size: 34px;
     font-weight: 800;
-    color: var(--accent);
+    color: var(--gold);
     letter-spacing: -0.01em;
+    max-width: 40vw;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
+  .wheel-winner .trophy { width: 46px; height: 46px; }
 
-  /* ---------- Speedometer ---------- */
-  #meter-card { width: min(560px, 88vw); text-align: center; }
-  .meter-question { font-size: 26px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.01em; }
-  #meter-svg { width: 100%; max-width: 460px; display: block; margin: 0 auto; }
-  #meter-needle { transform-origin: 200px 200px; transition: transform 0.9s cubic-bezier(0.3, 1.3, 0.4, 1); }
-  .meter-avg { font-size: 52px; font-weight: 800; color: var(--accent); margin-top: -66px; font-variant-numeric: tabular-nums; }
-  .meter-sub { color: var(--text-dim); font-size: 15px; font-weight: 600; margin-top: 2px; }
-  .meter-footer { margin-top: 18px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 15px; color: var(--text-dim); font-weight: 500; }
-
-  /* ---------- Tug of war ---------- */
-  #tug-card { width: min(760px, 92vw); }
-  .tug-question { font-size: 28px; font-weight: 700; text-align: center; margin-bottom: 22px; letter-spacing: -0.01em; }
-  .tug-names { display: flex; justify-content: space-between; font-size: 18px; font-weight: 700; margin-bottom: 10px; }
-  .tug-names .tn-a { color: var(--accent); }
-  .tug-names .tn-b { color: #5B9BD9; }
-  .tug-bar { display: flex; height: 34px; border-radius: 17px; overflow: hidden; background: var(--card-soft); }
-  .tug-side { display: flex; align-items: center; font-weight: 800; font-size: 15px; color: rgba(255,255,255,0.95); transition: width 0.6s cubic-bezier(0.25, 0.9, 0.3, 1), filter 0.5s, opacity 0.5s; min-width: 0; }
-  .tug-a { background: var(--accent); justify-content: flex-start; padding-left: 14px; }
-  .tug-b { background: #4A86C8; justify-content: flex-end; padding-right: 14px; }
-  .tug-bar.decided .tug-side.loser { filter: saturate(0.15); opacity: 0.55; }
-  .tug-footer { margin-top: 18px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; font-size: 15px; color: var(--text-dim); font-weight: 500; }
-  .tug-footer .votes { color: var(--text); font-weight: 700; }
-  .tug-winner-tag { margin-top: 16px; text-align: center; font-size: 20px; font-weight: 800; color: var(--gold); animation: card-in 0.4s ease-out both; }
+  /* ---------- Donut poll (translucent ring, like the reference) ---------- */
+  #donut-card {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: band-in 0.55s cubic-bezier(0.2, 0.9, 0.25, 1) both;
+  }
+  #donut-card.leaving { animation: band-out 0.4s cubic-bezier(0.55, 0, 0.75, 0.4) both; }
+  #donut-svg { height: 88vh; width: auto; }
+  .donut-pill {
+    position: fixed;
+    left: 50%;
+    bottom: 4vh;
+    transform: translateX(-50%);
+    background: var(--card);
+    border-radius: 999px;
+    padding: 10px 22px;
+    font-size: 16px;
+    font-weight: 700;
+    white-space: nowrap;
+    box-shadow: 0 8px 26px rgba(0,0,0,0.45);
+  }
+  .donut-pill span { color: var(--text-dim); font-weight: 500; }
 
   /* ---------- Bullet points ---------- */
   #bullets-card { position: fixed; right: 4vw; top: 50%; transform: translateY(-50%); width: min(340px, 34vw); padding: 26px 26px; }
@@ -284,21 +334,12 @@
   .bul-item.active::before { background: var(--accent); box-shadow: 0 0 0 5px rgba(29,158,117,0.25); }
 
   /* ---------- World map ---------- */
-  #map-card { width: min(940px, 94vw); }
-  .map-title { font-size: 15px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 14px; }
-  #map-svg { width: 100%; display: block; }
+  #map-card { text-align: center; }
+  .map-title { font-size: 15px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 12px; }
+  #map-svg { height: 34vh; width: auto; max-width: 90vw; display: block; margin: 0 auto; }
   .map-pin { animation: pin-in 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) both; }
   @keyframes pin-in { from { opacity: 0; transform: scale(0); } to { opacity: 1; transform: scale(1); } }
   .map-footer { margin-top: 14px; font-size: 14px; color: var(--text-dim); font-weight: 500; text-align: center; }
-
-  /* ---------- Floating avatars ---------- */
-  #avatars-layer { position: fixed; inset: 0; pointer-events: none; }
-  .av-bubble { position: absolute; display: flex; flex-direction: column; align-items: center; gap: 6px; animation: av-in 0.5s cubic-bezier(0.2, 1.3, 0.4, 1) both, av-float var(--dur, 6s) ease-in-out var(--delay, 0s) infinite alternate; }
-  @keyframes av-in { from { opacity: 0; transform: scale(0.4); } to { opacity: 1; transform: scale(1); } }
-  @keyframes av-float { from { margin-top: 0; } to { margin-top: 26px; } }
-  .av-circle { width: 62px; height: 62px; border-radius: 50%; overflow: hidden; border: 3px solid var(--accent); background: #2b3038; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 22px; color: #fff; box-shadow: 0 6px 18px rgba(0,0,0,0.45); }
-  .av-circle img { width: 100%; height: 100%; object-fit: cover; }
-  .av-name { background: var(--card); border-radius: 999px; padding: 4px 12px; font-size: 12.5px; font-weight: 700; max-width: 130px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
   /* ---------- Connection pill (only shows when something is down) ---------- */
   #confetti {
@@ -386,7 +427,7 @@
 
 <div class="stage">
   <!-- Poll -->
-  <div id="poll-card" class="card hidden">
+  <div id="poll-card" class="band hidden">
     <div class="poll-question" id="poll-question"></div>
     <div id="poll-rows"></div>
     <div class="poll-first hidden" id="poll-first"></div>
@@ -397,7 +438,7 @@
   </div>
 
   <!-- Word cloud -->
-  <div id="cloud-card" class="card hidden">
+  <div id="cloud-card" class="band hidden">
     <div class="cloud-title">Live from the chat</div>
     <div class="cloud-words" id="cloud-words">
       <div class="cloud-empty">Waiting for the first messages…</div>
@@ -413,14 +454,19 @@
         <circle cx="200" cy="200" r="26" fill="rgba(18,20,25,0.95)" stroke="rgba(255,255,255,0.25)" stroke-width="2"/>
       </svg>
     </div>
-    <div class="wheel-winner hidden" id="wheel-winner">
+  </div>
+
+  <div class="wheel-winner hidden" id="wheel-winner">
+    <svg class="trophy" viewBox="0 0 24 24" fill="#E8B33F"><path d="M5 3h14v2h3v3c0 2.8-2 5.1-4.7 5.8A6 6 0 0 1 13 17.9V20h4v2H7v-2h4v-2.1a6 6 0 0 1-4.3-4.1C4 13.1 2 10.8 2 8V5h3V3zm0 4H4v1c0 1.6 1 3 2.4 3.6A9 9 0 0 1 5 8V7zm14 0v1c0 1.3-.2 2.5-.6 3.6C19.9 11 21 9.6 21 8V7h-1z"/></svg>
+    <div class="win-avatar" id="wheel-winner-avatar"></div>
+    <div>
       <div class="ww-label">Winner</div>
       <div class="ww-name" id="wheel-winner-name"></div>
     </div>
   </div>
 
   <!-- Speedometer -->
-  <div id="meter-card" class="card hidden">
+  <div id="meter-card" class="band hidden">
     <div class="meter-question" id="meter-question"></div>
     <svg id="meter-svg" viewBox="0 0 400 230"></svg>
     <div class="meter-avg" id="meter-avg">–</div>
@@ -429,7 +475,8 @@
   </div>
 
   <!-- Tug of war -->
-  <div id="tug-card" class="card hidden">
+  <div id="tug-card" class="band hidden">
+   <div class="tug-inner">
     <div class="tug-question" id="tug-question"></div>
     <div class="tug-names"><span class="tn-a" id="tug-name-a"></span><span class="tn-b" id="tug-name-b"></span></div>
     <div class="tug-bar" id="tug-bar">
@@ -441,6 +488,7 @@
       <span><span class="votes" id="tug-total">0</span> votes</span>
       <span id="tug-hint">type A or B in chat</span>
     </div>
+   </div>
   </div>
 
   <!-- Bullet points -->
@@ -450,15 +498,18 @@
   </div>
 
   <!-- World map -->
-  <div id="map-card" class="card hidden">
+  <div id="map-card" class="band hidden">
     <div class="map-title">Where is everyone watching from?</div>
     <svg id="map-svg" viewBox="0 0 1000 500"></svg>
     <div class="map-footer">type your country in the chat</div>
   </div>
 </div>
 
-<!-- Floating avatars (full-canvas layer, not a card) -->
-<div id="avatars-layer" class="hidden"></div>
+<!-- Donut poll (translucent ring over the whole scene) -->
+<div id="donut-card" class="hidden">
+  <svg id="donut-svg" viewBox="0 0 560 560"></svg>
+  <div class="donut-pill" id="donut-pill"></div>
+</div>
 
 <canvas id="confetti"></canvas>
 
@@ -476,10 +527,12 @@
   </div>
 </div>
 
-<script src="ssn-link.js"></script>
+<script src="ssn-link.js?v=5"></script>
 <script>
 (function () {
   'use strict';
+
+  console.log('[webinar-kit] overlay v5, ssn-link v' + (window.SSNLink && SSNLink.VERSION));
 
   var $ = function (id) { return document.getElementById(id); };
 
@@ -495,12 +548,12 @@
   var tug = { options: ['A', 'B'], counts: [0, 0], votes: {}, decided: false };
   var bullets = { title: '', items: [], active: 0 };
   var mapw = { counts: {}, users: {} };
-  var av = { seen: {}, order: [] };
+  var donut = { question: '', options: [], counts: [], votes: {} };
 
   /* ============================================================
    * Widget switching
    * ============================================================ */
-  var cards = { poll: $('poll-card'), cloud: $('cloud-card'), wheel: $('wheel-card'), meter: $('meter-card'), tug: $('tug-card'), bullets: $('bullets-card'), map: $('map-card'), avatars: $('avatars-layer') };
+  var cards = { poll: $('poll-card'), cloud: $('cloud-card'), wheel: $('wheel-card'), meter: $('meter-card'), tug: $('tug-card'), bullets: $('bullets-card'), map: $('map-card'), donut: $('donut-card') };
 
   function show(widget) {
     for (var k in cards) cards[k].classList.toggle('hidden', k !== widget);
@@ -514,6 +567,7 @@
 
   function hideAll() {
     confetti.stop();
+    $('wheel-winner').classList.add('hidden');
     if (!active) return;
     var card = cards[active];
     var was = active;
@@ -625,13 +679,17 @@
     });
     var banner = $('poll-first');
     if (cmd.firstCorrect && cmd.firstCorrect.name) {
-      banner.innerHTML = 'First correct answer: <b></b>';
+      banner.innerHTML = TROPHY_SVG + '<div class="win-avatar"></div><span>First correct answer: <b></b></span>';
       banner.querySelector('b').textContent = cmd.firstCorrect.name;
+      fillAvatar(banner.querySelector('.win-avatar'), cmd.firstCorrect.name, cmd.firstCorrect.img);
+      if (typeof confetti !== 'undefined') confetti.celebrate();
     } else {
       banner.textContent = 'No one picked the right answer';
     }
     banner.classList.remove('hidden');
   }
+
+  var TROPHY_SVG = '<svg class="trophy" viewBox="0 0 24 24" fill="#E8B33F"><path d="M5 3h14v2h3v3c0 2.8-2 5.1-4.7 5.8A6 6 0 0 1 13 17.9V20h4v2H7v-2h4v-2.1a6 6 0 0 1-4.3-4.1C4 13.1 2 10.8 2 8V5h3V3zm0 4H4v1c0 1.6 1 3 2.4 3.6A9 9 0 0 1 5 8V7zm14 0v1c0 1.3-.2 2.5-.6 3.6C19.9 11 21 9.6 21 8V7h-1z"/></svg>';
 
   /* ============================================================
    * Word cloud
@@ -804,7 +862,9 @@
     var seg = 360 / n;
     var center = (cmd.winnerIndex + 0.5) * seg;
     var jitter = typeof cmd.jitter === 'number' ? cmd.jitter : 0; // -0.35..0.35 of a segment
-    var target = 5 * 360 + (360 - center) + jitter * seg;
+    // pointer sits at the wheel's left edge (180deg clockwise from top)
+    var base = ((180 - center) % 360 + 360) % 360;
+    var target = 5 * 360 + base + jitter * seg;
 
     var rotor = $('wheel-rotor');
     // start from a clean 0 so repeated spins behave identically
@@ -816,7 +876,9 @@
 
     setTimeout(function () {
       if (active !== 'wheel') return;
-      $('wheel-winner-name').textContent = wheel.entries[cmd.winnerIndex] || '';
+      var wname = wheel.entries[cmd.winnerIndex] || '';
+      $('wheel-winner-name').textContent = wname;
+      fillAvatar($('wheel-winner-avatar'), wname, cmd.winnerImg);
       $('wheel-winner').classList.remove('hidden');
       confetti.celebrate();
     }, matchMedia('(prefers-reduced-motion: reduce)').matches ? 1300 : 6500);
@@ -1033,7 +1095,9 @@
     } else {
       var w = tug.counts[0] > tug.counts[1] ? 0 : 1;
       $(w === 0 ? 'tug-side-b' : 'tug-side-a').classList.add('loser');
-      tag.textContent = 'Winner: ' + tug.options[w];
+      tag.innerHTML = TROPHY_SVG;
+      tag.appendChild(document.createTextNode('Winner: ' + tug.options[w]));
+      if (typeof confetti !== 'undefined') confetti.celebrate();
     }
     tag.classList.remove('hidden');
   }
@@ -1162,54 +1226,123 @@
   }
 
   /* ============================================================
-   * Floating avatars: everyone who chats pops up as a bubble
+   * Donut poll: translucent ring, dashed outlines, rotated labels
    * ============================================================ */
-  function startAvatars() {
-    av.seen = {};
-    av.order = [];
-    $('avatars-layer').innerHTML = '';
-    show('avatars');
+  var DONUT_FILLS = ['rgba(255,255,255,0.62)','rgba(255,255,255,0.30)','rgba(255,255,255,0.48)','rgba(255,255,255,0.22)','rgba(255,255,255,0.40)','rgba(255,255,255,0.16)'];
+
+  function startDonut(cmd) {
+    donut.question = cmd.question || '';
+    donut.options = (cmd.options || []).slice(0, 6);
+    donut.counts = donut.options.map(function () { return 0; });
+    donut.votes = {};
+    if (cmd.resume && Array.isArray(cmd.resume.counts)) {
+      donut.counts = cmd.resume.counts.slice(0, donut.options.length);
+      donut.votes = cmd.resume.votes || {};
+    }
+    var letters = donut.options.map(function (_, i) { return String.fromCharCode(65 + i); });
+    var hint = letters.length > 1 ? letters.slice(0, -1).join(', ') + ' or ' + letters[letters.length - 1] : letters[0];
+    var pill = $('donut-pill');
+    pill.innerHTML = '';
+    pill.appendChild(document.createTextNode(donut.question + ' '));
+    var span = document.createElement('span');
+    span.textContent = '\u00b7 type ' + hint + ' in chat';
+    pill.appendChild(span);
+    renderDonut();
+    show('donut');
   }
 
-  function feedAvatars(msg) {
-    if (active !== 'avatars' || !msg.name || av.seen[msg.voterKey]) return;
-    av.seen[msg.voterKey] = true;
-    var layer = $('avatars-layer');
-    var b = document.createElement('div');
-    b.className = 'av-bubble';
-    // random spot, kept off the vertical center strip where the host usually is
-    var x = Math.random() < 0.5 ? 4 + Math.random() * 24 : 68 + Math.random() * 24;
-    b.style.left = x + '%';
-    b.style.top = (8 + Math.random() * 68) + '%';
-    b.style.setProperty('--dur', (5 + Math.random() * 4).toFixed(1) + 's');
-    b.style.setProperty('--delay', (-Math.random() * 5).toFixed(1) + 's');
-    var circle = document.createElement('div');
-    circle.className = 'av-circle';
-    var img = msg.raw && (msg.raw.chatimg || msg.raw.chatimage);
-    if (img && /^https?:/.test(img)) {
-      var im = document.createElement('img');
-      im.src = img;
-      im.onerror = function () { circle.removeChild(im); circle.textContent = initials(msg.name); };
-      circle.appendChild(im);
-    } else {
-      circle.textContent = initials(msg.name);
-    }
-    var nm = document.createElement('div');
-    nm.className = 'av-name';
-    nm.textContent = msg.name;
-    b.appendChild(circle);
-    b.appendChild(nm);
-    layer.appendChild(b);
-    av.order.push(b);
-    if (av.order.length > 12) {
-      var oldest = av.order.shift();
-      if (oldest.parentNode) oldest.parentNode.removeChild(oldest);
+  function handleDonut(msg) {
+    if (active !== 'donut') return;
+    var text = msg.message.trim();
+    var firstWord = (text.replace(/^[^A-Za-z]+/, '').split(/\s+/)[0] || '').replace(/[^A-Za-z]+$/, '');
+    if (firstWord.length !== 1) return;
+    var idx = firstWord.toUpperCase().charCodeAt(0) - 65;
+    if (idx < 0 || idx >= donut.options.length) return;
+    var prev = donut.votes[msg.voterKey];
+    if (prev === idx) return;
+    if (typeof prev === 'number') donut.counts[prev]--;
+    donut.votes[msg.voterKey] = idx;
+    donut.counts[idx]++;
+    renderDonut();
+  }
+
+  function donutPt(cx, cy, r, a) {
+    var rad = (a - 90) * Math.PI / 180;
+    return [(cx + r * Math.cos(rad)).toFixed(2), (cy + r * Math.sin(rad)).toFixed(2)];
+  }
+
+  function renderDonut() {
+    var svg = $('donut-svg');
+    svg.innerHTML = '';
+    var n = donut.options.length;
+    if (!n) return;
+    var cx = 280, cy = 280, rIn = 108, rOut = 205, rDash = 218, rLabel = 240;
+    var total = donut.counts.reduce(function (a, b) { return a + b; }, 0);
+    var a = 0;
+    for (var i = 0; i < n; i++) {
+      var frac = total ? donut.counts[i] / total : 1 / n;
+      var a1 = Math.min(a + Math.max(frac * 360, 0.5), 360);
+      var large = (a1 - a) > 180 ? 1 : 0;
+
+      var p1 = donutPt(cx, cy, rOut, a), p2 = donutPt(cx, cy, rOut, a1);
+      var p3 = donutPt(cx, cy, rIn, a1), p4 = donutPt(cx, cy, rIn, a);
+      var seg = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      seg.setAttribute('d', 'M ' + p1.join(' ') + ' A ' + rOut + ' ' + rOut + ' 0 ' + large + ' 1 ' + p2.join(' ') +
+        ' L ' + p3.join(' ') + ' A ' + rIn + ' ' + rIn + ' 0 ' + large + ' 0 ' + p4.join(' ') + ' Z');
+      seg.setAttribute('fill', DONUT_FILLS[i % DONUT_FILLS.length]);
+      svg.appendChild(seg);
+
+      // dashed guide arc just outside the segment
+      if (a1 - a > 6) {
+        var d1 = donutPt(cx, cy, rDash, a + 2), d2 = donutPt(cx, cy, rDash, a1 - 2);
+        var dash = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        dash.setAttribute('d', 'M ' + d1.join(' ') + ' A ' + rDash + ' ' + rDash + ' 0 ' + ((a1 - a) > 184 ? 1 : 0) + ' 1 ' + d2.join(' '));
+        dash.setAttribute('fill', 'none');
+        dash.setAttribute('stroke', 'rgba(255,255,255,0.85)');
+        dash.setAttribute('stroke-width', '1.6');
+        dash.setAttribute('stroke-dasharray', '5 6');
+        svg.appendChild(dash);
+      }
+
+      // rotated label along the rim, flipped on the left half so it stays readable
+      var mid = (a + a1) / 2;
+      var lp = donutPt(cx, cy, rLabel, mid);
+      var rot = mid - 90;
+      if (mid > 180) rot += 180;
+      var pct = total ? (Math.round(donut.counts[i] / total * 1000) / 10).toFixed(1) : '0.0';
+      var name = donut.options[i];
+      if (name.length > 14) name = name.slice(0, 13) + '\u2026';
+      var t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      t.setAttribute('x', lp[0]); t.setAttribute('y', lp[1]);
+      t.setAttribute('fill', '#fff');
+      t.setAttribute('font-size', '21');
+      t.setAttribute('font-weight', '800');
+      t.setAttribute('font-family', "'Archivo', system-ui, sans-serif");
+      t.setAttribute('text-anchor', 'middle');
+      t.setAttribute('dominant-baseline', 'middle');
+      t.setAttribute('transform', 'rotate(' + rot.toFixed(1) + ' ' + lp[0] + ' ' + lp[1] + ')');
+      t.setAttribute('style', 'paint-order: stroke; stroke: rgba(12,14,18,0.85); stroke-width: 5px;');
+      t.textContent = name + ': ' + pct + '%';
+      svg.appendChild(t);
+      a = a1;
     }
   }
 
   function initials(name) {
-    var parts = name.trim().split(/\s+/);
-    return (parts[0][0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
+    var parts = String(name || '?').trim().split(/\s+/);
+    return ((parts[0][0] || '?') + (parts[1] ? parts[1][0] : '')).toUpperCase();
+  }
+
+  function fillAvatar(el, name, img) {
+    el.innerHTML = '';
+    if (img && /^https?:/.test(img)) {
+      var im = document.createElement('img');
+      im.src = img;
+      im.onerror = function () { el.innerHTML = ''; el.textContent = initials(name); };
+      el.appendChild(im);
+    } else {
+      el.textContent = initials(name);
+    }
   }
 
   /* ============================================================
@@ -1249,7 +1382,7 @@
         case 'tug:reveal':    revealTug(); break;
         case 'bullets:show':  showBullets(cmd); break;
         case 'map:start':     startMap(cmd); break;
-        case 'avatars:start': startAvatars(); break;
+        case 'donut:start':   startDonut(cmd); break;
         case 'hide':        hideAll(); break;
           // 'trigger' and 'overlay:hello' are panel-side; ignore here
         }
@@ -1264,7 +1397,7 @@
         handleMeter(msg);
         handleTug(msg);
         feedMap(msg);
-        feedAvatars(msg);
+        handleDonut(msg);
       }
     });
 
