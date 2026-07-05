@@ -85,6 +85,25 @@
     background: var(--panel);
   }
   .session-bar button { font-size: 12.5px; padding: 7px 12px; }
+
+  .chat-send {
+    display: flex;
+    gap: 6px;
+    margin-top: 14px;
+  }
+  .chat-send input {
+    flex: 1;
+    min-width: 120px;
+    font: inherit;
+    font-size: 13px;
+    color: var(--ink);
+    padding: 8px 11px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--panel);
+  }
+  .chat-send input:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent; }
+  .chat-send button { font-size: 13px; padding: 8px 14px; }
   .session-bar input:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent; }
 
   /* ---------- buttons ---------- */
@@ -127,6 +146,7 @@
   /* ---------- tabs ---------- */
   .tabs {
     display: flex;
+    flex-wrap: wrap;
     gap: 4px;
     background: #101216;
     border-radius: 12px;
@@ -134,7 +154,7 @@
     margin-bottom: 18px;
   }
   .tabs button {
-    flex: 1;
+    flex: 1 1 22%;
     background: transparent;
     color: var(--ink-soft);
     padding: 10px 8px;
@@ -368,8 +388,13 @@
 
   <div class="tabs" role="tablist">
     <button id="tab-poll" class="active" role="tab">Poll<kbd>1</kbd><span class="on-air hidden" id="air-poll"></span></button>
-    <button id="tab-cloud" role="tab">Word cloud<kbd>2</kbd><span class="on-air hidden" id="air-cloud"></span></button>
-    <button id="tab-wheel" role="tab">Wheel<kbd>3</kbd><span class="on-air hidden" id="air-wheel"></span></button>
+    <button id="tab-tug" role="tab">Tug of war<kbd>2</kbd><span class="on-air hidden" id="air-tug"></span></button>
+    <button id="tab-meter" role="tab">Meter<kbd>3</kbd><span class="on-air hidden" id="air-meter"></span></button>
+    <button id="tab-cloud" role="tab">Word cloud<kbd>4</kbd><span class="on-air hidden" id="air-cloud"></span></button>
+    <button id="tab-wheel" role="tab">Wheel<kbd>5</kbd><span class="on-air hidden" id="air-wheel"></span></button>
+    <button id="tab-bullets" role="tab">Bullets<kbd>6</kbd><span class="on-air hidden" id="air-bullets"></span></button>
+    <button id="tab-map" role="tab">Map<kbd>7</kbd><span class="on-air hidden" id="air-map"></span></button>
+    <button id="tab-avatars" role="tab">Avatars<kbd>8</kbd><span class="on-air hidden" id="air-avatars"></span></button>
   </div>
 
   <!-- ============ POLL ============ -->
@@ -431,8 +456,89 @@
     <div class="winner-note hidden" id="wheel-winner-note"></div>
   </div>
 
+  <div class="chat-send">
+    <input id="chat-msg-input" type="text" placeholder="Send a message to everyone in the meeting chat" maxlength="300" autocomplete="off">
+    <button class="primary" id="btn-chat-send">Send</button>
+  </div>
+
+  <!-- ============ TUG OF WAR ============ -->
+  <div class="panel hidden" id="panel-tug">
+    <div class="field">
+      <label for="tug-q">Question</label>
+      <input type="text" id="tug-q" placeholder="Which topic should win?" maxlength="120">
+    </div>
+    <div class="field">
+      <label>The two sides</label>
+      <div class="opt-row"><div class="opt-letter">A</div><input type="text" id="tug-a" maxlength="40" placeholder="Left side"></div>
+      <div class="opt-row"><div class="opt-letter">B</div><input type="text" id="tug-b" maxlength="40" placeholder="Right side"></div>
+    </div>
+    <div class="actions">
+      <button class="live" id="btn-tug-live">Go live on overlay</button>
+      <button id="btn-tug-reveal" disabled>Reveal winner</button>
+      <div class="spacer"></div>
+      <span class="sd-hint" id="tug-status"></span>
+    </div>
+  </div>
+
+  <!-- ============ METER ============ -->
+  <div class="panel hidden" id="panel-meter">
+    <div class="field">
+      <label for="meter-q">Question (audience answers 1 to 10 in chat)</label>
+      <input type="text" id="meter-q" placeholder="How are you feeling about this topic?" maxlength="120">
+    </div>
+    <div class="actions">
+      <button class="live" id="btn-meter-live">Go live on overlay</button>
+      <div class="spacer"></div>
+      <span class="sd-hint" id="meter-status"></span>
+    </div>
+  </div>
+
+  <!-- ============ BULLETS ============ -->
+  <div class="panel hidden" id="panel-bullets">
+    <div class="field">
+      <label for="bul-title-in">Title</label>
+      <input type="text" id="bul-title-in" placeholder="Today's session" maxlength="60">
+    </div>
+    <div class="field">
+      <label for="bul-items-in">Items, one per line</label>
+      <textarea id="bul-items-in" rows="6" placeholder="Intro&#10;Live demo&#10;Q&amp;A" style="width:100%; font:inherit; font-size:15px; padding:10px 13px; border:1px solid var(--line); border-radius:10px; background:var(--bg); resize:vertical;"></textarea>
+    </div>
+    <div class="actions">
+      <button class="live" id="btn-bullets-live">Show on overlay</button>
+      <button id="btn-bullets-prev" disabled>◀ Back<kbd>B</kbd></button>
+      <button id="btn-bullets-next" disabled>Next ▶<kbd>N</kbd></button>
+      <div class="spacer"></div>
+      <span class="sd-hint" id="bullets-status"></span>
+    </div>
+  </div>
+
+  <!-- ============ MAP ============ -->
+  <div class="panel hidden" id="panel-map">
+    <p style="font-size:14px; color:var(--ink-soft); line-height:1.6; margin-bottom:16px;">
+      Ask the audience to <b>type their country in the chat</b>. Pins appear on the overlay map as countries are mentioned. About 130 country names and common short forms (USA, UK, UAE) are recognized, in English.
+    </p>
+    <div class="actions" style="margin-top:0; padding-top:0; border-top:none;">
+      <button class="live" id="btn-map-live">Go live on overlay</button>
+      <div class="spacer"></div>
+      <span class="sd-hint" id="map-status"></span>
+    </div>
+    <div class="top-words" id="map-detected" style="margin-top:14px;"></div>
+  </div>
+
+  <!-- ============ AVATARS ============ -->
+  <div class="panel hidden" id="panel-avatars">
+    <p style="font-size:14px; color:var(--ink-soft); line-height:1.6; margin-bottom:16px;">
+      Everyone who sends a chat message pops up as a floating bubble with their name, and their photo when the platform provides one. Newest 12 stay on screen. Nice as a welcome moment at the start.
+    </p>
+    <div class="actions" style="margin-top:0; padding-top:0; border-top:none;">
+      <button class="live" id="btn-avatars-live">Go live on overlay</button>
+      <div class="spacer"></div>
+      <span class="sd-hint" id="avatars-status"></span>
+    </div>
+  </div>
+
   <footer>
-    Shortcuts: <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> switch tabs · <kbd>P</kbd> poll live · <kbd>A</kbd> reveal answer · <kbd>W</kbd> cloud live · <kbd>C</kbd> clear cloud · <kbd>S</kbd> spin · <kbd>R</kbd> reset wheel · <kbd>H</kbd> or <kbd>Esc</kbd> hide overlay.<br>
+    Shortcuts: <kbd>1</kbd>…<kbd>8</kbd> switch tabs · <kbd>N</kbd>/<kbd>B</kbd> agenda next/back · <kbd>P</kbd> poll live · <kbd>A</kbd> reveal answer · <kbd>W</kbd> cloud live · <kbd>C</kbd> clear cloud · <kbd>S</kbd> spin · <kbd>R</kbd> reset wheel · <kbd>H</kbd> or <kbd>Esc</kbd> hide overlay.<br>
     <div id="sd-block">
       Stream Deck (no focus needed): add a <b>Website</b> action, tick <b>"GET request in background"</b>, and use one of these URLs for the current session. Click one to copy it.
       <div id="sd-urls"></div>
@@ -482,6 +588,12 @@
   var poll = { live: false, ended: false, revealed: false, correctIndex: null, firstCorrect: null, options: [], votes: {}, counts: [] };
   var cloud = { live: false, msgCount: 0, counts: {} };
   var wheel = { entries: [], seen: {}, lastWinner: null };
+  var tug = { live: false, decided: false, question: '', options: [], counts: [0, 0], votes: {} };
+  var meter = { live: false, question: '', values: {} };
+  var bullets = { title: '', items: [], active: 0, shown: false };
+  var mapw = { live: false, counts: {} };
+  var avat = { live: false };
+  var PANEL_COUNTRIES = null; // filled below, shared with the map widget
 
   var control = null;
 
@@ -499,6 +611,14 @@
     ['cloud-clear', 'clear the word cloud'],
     ['spin', 'spin the wheel'],
     ['wheel-reset', 'reset the wheel'],
+    ['tug-live', 'launch the tug of war'],
+    ['tug-reveal', 'reveal tug winner'],
+    ['meter-live', 'launch the meter'],
+    ['bullets-live', 'show the agenda'],
+    ['bullets-next', 'agenda: next item'],
+    ['bullets-prev', 'agenda: previous item'],
+    ['map-live', 'launch the world map'],
+    ['avatars-live', 'launch avatar bubbles'],
     ['hide', 'hide the overlay']
   ];
   function renderSdUrls() {
@@ -597,6 +717,42 @@
         }
       }
     }
+    // tug votes mirror
+    if (tug.live && !tug.decided) {
+      var fw = (msg.message.trim().replace(/^[^A-Za-z]+/, '').split(/\s+/)[0] || '').replace(/[^A-Za-z]+$/, '');
+      if (fw.length === 1) {
+        var ti = fw.toUpperCase() === 'A' ? 0 : fw.toUpperCase() === 'B' ? 1 : -1;
+        if (ti >= 0) {
+          var tprev = tug.votes[msg.voterKey];
+          if (tprev !== ti) {
+            if (typeof tprev === 'number') tug.counts[tprev]--;
+            tug.votes[msg.voterKey] = ti;
+            tug.counts[ti]++;
+            renderTugStatus();
+          }
+        }
+      }
+    }
+    // meter ratings mirror
+    if (meter.live) {
+      var mm = msg.message.trim().match(/^(10|[1-9])\b/);
+      if (mm) {
+        meter.values[msg.voterKey] = parseInt(mm[1], 10);
+        renderMeterStatus();
+      }
+    }
+    // map country mirror
+    if (mapw.live && PANEL_COUNTRIES) {
+      var lowered = ' ' + msg.message.toLowerCase().replace(/[^a-zçëüöäéáíñ ]/g, ' ') + ' ';
+      var hit = false;
+      for (var cn in PANEL_COUNTRIES) {
+        if (lowered.indexOf(' ' + cn + ' ') !== -1) {
+          mapw.counts[cn] = (mapw.counts[cn] || 0) + 1;
+          hit = true;
+        }
+      }
+      if (hit) renderMapStatus();
+    }
     // cloud counters mirror
     if (cloud.live) {
       cloud.msgCount++;
@@ -632,6 +788,18 @@
         send({ cmd: 'cloud:start', resume: { counts: cloud.counts } });
       } else if (liveWidget === 'wheel') {
         send({ cmd: 'wheel:show', entries: wheel.entries });
+      } else if (liveWidget === 'tug' && tug.live) {
+        send({ cmd: 'tug:start', question: tug.question, options: tug.options,
+               resume: { counts: tug.counts, votes: tug.votes } });
+        if (tug.decided) send({ cmd: 'tug:reveal' });
+      } else if (liveWidget === 'meter' && meter.live) {
+        send({ cmd: 'meter:start', question: meter.question, resume: { values: meter.values } });
+      } else if (liveWidget === 'bullets' && bullets.shown) {
+        send(bulletsPayload());
+      } else if (liveWidget === 'map' && mapw.live) {
+        send({ cmd: 'map:start', resume: { counts: mapw.counts } });
+      } else if (liveWidget === 'avatars' && avat.live) {
+        send({ cmd: 'avatars:start' });
       }
       return;
     }
@@ -652,6 +820,14 @@
       case 'cloud-live':  goLiveCloud(); break;
       case 'cloud-clear': clearCloud(); break;
       case 'wheel-reset': resetWheel(); break;
+      case 'tug-live':     goLiveTug(); break;
+      case 'tug-reveal':   revealTugWinner(); break;
+      case 'meter-live':   goLiveMeter(); break;
+      case 'bullets-live': goLiveBullets(); break;
+      case 'bullets-next': bulletsStep(1); break;
+      case 'bullets-prev': bulletsStep(-1); break;
+      case 'map-live':     goLiveMap(); break;
+      case 'avatars-live': goLiveAvatars(); break;
       default: toast('Unknown trigger: ' + action);
     }
   }
@@ -659,7 +835,7 @@
   /* ============================================================
    * Tabs
    * ============================================================ */
-  var TABS = ['poll', 'cloud', 'wheel'];
+  var TABS = ['poll', 'tug', 'meter', 'cloud', 'wheel', 'bullets', 'map', 'avatars'];
   function switchTab(name) {
     TABS.forEach(function (t) {
       $('tab-' + t).classList.toggle('active', t === name);
@@ -670,6 +846,23 @@
     $('tab-' + t).addEventListener('click', function () { switchTab(t); });
   });
 
+  function stopAllLive() {
+    poll.live = false;
+    tug.live = false;
+    meter.live = false;
+    mapw.live = false;
+    avat.live = false;
+    cloud.live = false;
+    bullets.shown = false;
+    $('btn-cloud-clear').disabled = true;
+    $('btn-poll-end').disabled = true;
+    $('btn-poll-reveal').disabled = true;
+    $('btn-tug-reveal').disabled = true;
+    $('btn-bullets-prev').disabled = true;
+    $('btn-bullets-next').disabled = true;
+    $('poll-tally').classList.add('hidden');
+  }
+
   function setAir(widget) {
     liveWidget = widget;
     TABS.forEach(function (t) {
@@ -679,11 +872,8 @@
 
   function hideOverlay() {
     send({ cmd: 'hide' });
-    if (liveWidget === 'poll') poll.live = false;
-    if (liveWidget === 'cloud') { cloud.live = false; $('btn-cloud-clear').disabled = true; }
+    stopAllLive();
     setAir(null);
-    $('poll-tally').classList.add('hidden');
-    $('btn-poll-end').disabled = true;
     toast('Overlay cleared');
   }
   $('btn-hide').addEventListener('click', hideOverlay);
@@ -761,6 +951,7 @@
     if (!q) { toast('Type a question first'); switchTab('poll'); return; }
     if (opts.length < 2) { toast('A poll needs at least 2 options'); switchTab('poll'); return; }
 
+    stopAllLive();
     poll.question = q;
     poll.options = opts;
     poll.votes = {};
@@ -843,6 +1034,7 @@
    * Word cloud
    * ============================================================ */
   function goLiveCloud() {
+    stopAllLive();
     cloud = { live: true, msgCount: 0, counts: {} };
     send({ cmd: 'cloud:start' });
     setAir('cloud');
@@ -953,6 +1145,146 @@
   $('btn-wheel-reset').addEventListener('click', resetWheel);
 
   /* ============================================================
+   * Tug of war
+   * ============================================================ */
+  function goLiveTug() {
+    var q = $('tug-q').value.trim();
+    var a = $('tug-a').value.trim(), b2 = $('tug-b').value.trim();
+    if (!q || !a || !b2) { toast('Tug of war needs a question and both sides'); switchTab('tug'); return; }
+    stopAllLive();
+    tug = { live: true, decided: false, question: q, options: [a, b2], counts: [0, 0], votes: {} };
+    send({ cmd: 'tug:start', question: q, options: [a, b2] });
+    setAir('tug');
+    switchTab('tug');
+    $('btn-tug-reveal').disabled = false;
+    renderTugStatus();
+    toast('Tug of war is live');
+  }
+  $('btn-tug-live').addEventListener('click', goLiveTug);
+
+  function revealTugWinner() {
+    if (!tug.live || tug.decided) return;
+    tug.decided = true;
+    send({ cmd: 'tug:reveal' });
+    $('btn-tug-reveal').disabled = true;
+    renderTugStatus();
+    var msg = tug.counts[0] === tug.counts[1] ? "It's a tie"
+      : 'Winner: ' + tug.options[tug.counts[0] > tug.counts[1] ? 0 : 1];
+    toast(msg);
+  }
+  $('btn-tug-reveal').addEventListener('click', revealTugWinner);
+
+  function renderTugStatus() {
+    if (!tug.live) { $('tug-status').textContent = ''; return; }
+    $('tug-status').textContent = 'A ' + tug.counts[0] + ' · ' + tug.counts[1] + ' B' + (tug.decided ? ' · final' : '');
+  }
+
+  /* ============================================================
+   * Meter
+   * ============================================================ */
+  function goLiveMeter() {
+    var q = $('meter-q').value.trim();
+    if (!q) { toast('Type a question first'); switchTab('meter'); return; }
+    stopAllLive();
+    meter = { live: true, question: q, values: {} };
+    send({ cmd: 'meter:start', question: q });
+    setAir('meter');
+    switchTab('meter');
+    renderMeterStatus();
+    toast('Meter is live');
+  }
+  $('btn-meter-live').addEventListener('click', goLiveMeter);
+
+  function renderMeterStatus() {
+    if (!meter.live) { $('meter-status').textContent = ''; return; }
+    var keys = Object.keys(meter.values);
+    if (!keys.length) { $('meter-status').textContent = 'no ratings yet'; return; }
+    var sum = 0;
+    keys.forEach(function (k) { sum += meter.values[k]; });
+    $('meter-status').textContent = 'average ' + (Math.round(sum / keys.length * 10) / 10).toFixed(1) + ' from ' + keys.length;
+  }
+
+  /* ============================================================
+   * Bullets
+   * ============================================================ */
+  function bulletsPayload() {
+    return { cmd: 'bullets:show', title: $('bul-title-in').value.trim() || "Today's session",
+             items: bullets.items, active: bullets.active };
+  }
+
+  function goLiveBullets() {
+    var items = $('bul-items-in').value.split('\n').map(function (l) { return l.trim(); }).filter(Boolean).slice(0, 10);
+    if (items.length < 2) { toast('Add at least 2 items, one per line'); switchTab('bullets'); return; }
+    stopAllLive();
+    bullets.items = items;
+    bullets.active = 0;
+    bullets.shown = true;
+    send(bulletsPayload());
+    setAir('bullets');
+    switchTab('bullets');
+    $('btn-bullets-prev').disabled = false;
+    $('btn-bullets-next').disabled = false;
+    renderBulletsStatus();
+    toast('Agenda is on the overlay');
+  }
+  $('btn-bullets-live').addEventListener('click', goLiveBullets);
+
+  function bulletsStep(dir) {
+    if (!bullets.shown) return;
+    var next = bullets.active + dir;
+    if (next < 0 || next >= bullets.items.length) return;
+    bullets.active = next;
+    send(bulletsPayload());
+    renderBulletsStatus();
+  }
+  $('btn-bullets-next').addEventListener('click', function () { bulletsStep(1); });
+  $('btn-bullets-prev').addEventListener('click', function () { bulletsStep(-1); });
+
+  function renderBulletsStatus() {
+    $('bullets-status').textContent = bullets.shown
+      ? 'on: ' + bullets.items[bullets.active] + ' (' + (bullets.active + 1) + '/' + bullets.items.length + ')'
+      : '';
+  }
+
+  /* ============================================================
+   * Map
+   * ============================================================ */
+  PANEL_COUNTRIES = {"afghanistan":1,"albania":1,"algeria":1,"argentina":1,"armenia":1,"australia":1,"austria":1,"azerbaijan":1,"bangladesh":1,"belarus":1,"belgium":1,"bolivia":1,"bosnia":1,"brazil":1,"bulgaria":1,"cambodia":1,"cameroon":1,"canada":1,"chile":1,"china":1,"colombia":1,"costa rica":1,"croatia":1,"cuba":1,"cyprus":1,"czech":1,"czechia":1,"denmark":1,"dominican republic":1,"ecuador":1,"egypt":1,"estonia":1,"ethiopia":1,"finland":1,"france":1,"georgia":1,"germany":1,"ghana":1,"greece":1,"guatemala":1,"honduras":1,"hungary":1,"iceland":1,"india":1,"indonesia":1,"iran":1,"iraq":1,"ireland":1,"israel":1,"italy":1,"jamaica":1,"japan":1,"jordan":1,"kazakhstan":1,"kenya":1,"kosovo":1,"kuwait":1,"latvia":1,"lebanon":1,"libya":1,"lithuania":1,"luxembourg":1,"malaysia":1,"malta":1,"mexico":1,"moldova":1,"mongolia":1,"montenegro":1,"morocco":1,"myanmar":1,"nepal":1,"netherlands":1,"new zealand":1,"nicaragua":1,"nigeria":1,"north macedonia":1,"macedonia":1,"norway":1,"oman":1,"pakistan":1,"panama":1,"paraguay":1,"peru":1,"philippines":1,"poland":1,"portugal":1,"qatar":1,"romania":1,"russia":1,"saudi arabia":1,"senegal":1,"serbia":1,"singapore":1,"slovakia":1,"slovenia":1,"south africa":1,"south korea":1,"korea":1,"spain":1,"sri lanka":1,"sweden":1,"switzerland":1,"syria":1,"taiwan":1,"tanzania":1,"thailand":1,"tunisia":1,"turkey":1,"türkiye":1,"uganda":1,"ukraine":1,"united arab emirates":1,"uae":1,"united kingdom":1,"uk":1,"england":1,"scotland":1,"united states":1,"usa":1,"us":1,"america":1,"uruguay":1,"uzbekistan":1,"venezuela":1,"vietnam":1,"yemen":1,"zimbabwe":1};
+
+  function goLiveMap() {
+    stopAllLive();
+    mapw = { live: true, counts: {} };
+    send({ cmd: 'map:start' });
+    setAir('map');
+    switchTab('map');
+    renderMapStatus();
+    toast('Map is live, ask people to type their country');
+  }
+  $('btn-map-live').addEventListener('click', goLiveMap);
+
+  function renderMapStatus() {
+    var names = Object.keys(mapw.counts);
+    $('map-status').textContent = mapw.live ? names.length + ' countries' : '';
+    $('map-detected').textContent = names.length
+      ? 'Detected: ' + names.map(function (n) { return n + ' (' + mapw.counts[n] + ')'; }).join(' · ')
+      : '';
+  }
+
+  /* ============================================================
+   * Avatars
+   * ============================================================ */
+  function goLiveAvatars() {
+    stopAllLive();
+    avat.live = true;
+    send({ cmd: 'avatars:start' });
+    setAir('avatars');
+    switchTab('avatars');
+    $('avatars-status').textContent = 'live';
+    toast('Avatar bubbles are live');
+  }
+  $('btn-avatars-live').addEventListener('click', goLiveAvatars);
+
+  /* ============================================================
    * Keyboard shortcuts (Stream Deck Hotkey actions land here)
    * ============================================================ */
   document.addEventListener('keydown', function (e) {
@@ -961,10 +1293,11 @@
       if (e.key === 'Escape') e.target.blur();
       return;
     }
+    var d = parseInt(e.key, 10);
+    if (d >= 1 && d <= TABS.length) { switchTab(TABS[d - 1]); return; }
     switch (e.key.toLowerCase()) {
-      case '1': switchTab('poll'); break;
-      case '2': switchTab('cloud'); break;
-      case '3': switchTab('wheel'); break;
+      case 'n': bulletsStep(1); break;
+      case 'b': bulletsStep(-1); break;
       case 'p': goLivePoll(); break;
       case 'a': revealPoll(); break;
       case 'w': goLiveCloud(); break;
@@ -973,6 +1306,30 @@
       case 'r': resetWheel(); break;
       case 'h': case 'escape': hideOverlay(); break;
     }
+  });
+
+  /* ============================================================
+   * Message to the meeting chat, via SSN's sendEncodedChat action.
+   * Same HTTP endpoint the Stream Deck buttons use. SSN's extension
+   * picks it up on its default channel and types it into the
+   * Zoom/Meet chat box, so that tab must be open and not minimized.
+   * ============================================================ */
+  function sendChatMessage() {
+    var msg = $('chat-msg-input').value.trim();
+    if (!msg) return;
+    if (!SSNLink.session) { toast('Set the session ID first'); return; }
+    var url = 'https://io.socialstream.ninja/' + encodeURIComponent(SSNLink.session) +
+      '/sendEncodedChat/null/' + encodeURIComponent(msg);
+    fetch(url, { mode: 'no-cors' }).then(function () {
+      toast('Handed to SSN to post in the chat');
+      $('chat-msg-input').value = '';
+    }).catch(function () {
+      toast('Could not reach SSN\'s server');
+    });
+  }
+  $('btn-chat-send').addEventListener('click', sendChatMessage);
+  $('chat-msg-input').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') sendChatMessage();
   });
 
   /* ============================================================

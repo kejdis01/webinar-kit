@@ -189,14 +189,6 @@
   }
   .cloud-word.r1 { color: var(--accent); font-weight: 800; }
   .cloud-word.r2 { color: #6fcfae; }
-  .cloud-word .cw-n {
-    font-size: 0.38em;
-    font-weight: 800;
-    vertical-align: super;
-    opacity: 0.85;
-    margin-left: 3px;
-    letter-spacing: 0;
-  }
   @keyframes word-in {
     from { opacity: 0; transform: scale(0.6); }
     to   { opacity: 1; transform: scale(1); }
@@ -254,6 +246,59 @@
     color: var(--accent);
     letter-spacing: -0.01em;
   }
+
+  /* ---------- Speedometer ---------- */
+  #meter-card { width: min(560px, 88vw); text-align: center; }
+  .meter-question { font-size: 26px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.01em; }
+  #meter-svg { width: 100%; max-width: 460px; display: block; margin: 0 auto; }
+  #meter-needle { transform-origin: 200px 200px; transition: transform 0.9s cubic-bezier(0.3, 1.3, 0.4, 1); }
+  .meter-avg { font-size: 52px; font-weight: 800; color: var(--accent); margin-top: -66px; font-variant-numeric: tabular-nums; }
+  .meter-sub { color: var(--text-dim); font-size: 15px; font-weight: 600; margin-top: 2px; }
+  .meter-footer { margin-top: 18px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 15px; color: var(--text-dim); font-weight: 500; }
+
+  /* ---------- Tug of war ---------- */
+  #tug-card { width: min(760px, 92vw); }
+  .tug-question { font-size: 28px; font-weight: 700; text-align: center; margin-bottom: 22px; letter-spacing: -0.01em; }
+  .tug-names { display: flex; justify-content: space-between; font-size: 18px; font-weight: 700; margin-bottom: 10px; }
+  .tug-names .tn-a { color: var(--accent); }
+  .tug-names .tn-b { color: #5B9BD9; }
+  .tug-bar { display: flex; height: 34px; border-radius: 17px; overflow: hidden; background: var(--card-soft); }
+  .tug-side { display: flex; align-items: center; font-weight: 800; font-size: 15px; color: rgba(255,255,255,0.95); transition: width 0.6s cubic-bezier(0.25, 0.9, 0.3, 1), filter 0.5s, opacity 0.5s; min-width: 0; }
+  .tug-a { background: var(--accent); justify-content: flex-start; padding-left: 14px; }
+  .tug-b { background: #4A86C8; justify-content: flex-end; padding-right: 14px; }
+  .tug-bar.decided .tug-side.loser { filter: saturate(0.15); opacity: 0.55; }
+  .tug-footer { margin-top: 18px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; font-size: 15px; color: var(--text-dim); font-weight: 500; }
+  .tug-footer .votes { color: var(--text); font-weight: 700; }
+  .tug-winner-tag { margin-top: 16px; text-align: center; font-size: 20px; font-weight: 800; color: var(--gold); animation: card-in 0.4s ease-out both; }
+
+  /* ---------- Bullet points ---------- */
+  #bullets-card { position: fixed; right: 4vw; top: 50%; transform: translateY(-50%); width: min(340px, 34vw); padding: 26px 26px; }
+  .bul-title { font-size: 13px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 18px; }
+  .bul-list { position: relative; }
+  .bul-list::before { content: ''; position: absolute; left: 7px; top: 8px; bottom: 8px; width: 2px; background: rgba(255,255,255,0.15); }
+  .bul-item { position: relative; padding: 7px 0 7px 30px; font-size: 16px; font-weight: 600; color: var(--text-dim); transition: color 0.3s; }
+  .bul-item::before { content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; border-radius: 50%; background: #3a404b; border: 3px solid rgba(18,20,25,0.9); transition: background 0.3s, box-shadow 0.3s; }
+  .bul-item.done { color: rgba(255,255,255,0.38); }
+  .bul-item.done::before { background: rgba(29,158,117,0.45); }
+  .bul-item.active { color: #fff; font-weight: 800; }
+  .bul-item.active::before { background: var(--accent); box-shadow: 0 0 0 5px rgba(29,158,117,0.25); }
+
+  /* ---------- World map ---------- */
+  #map-card { width: min(940px, 94vw); }
+  .map-title { font-size: 15px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 14px; }
+  #map-svg { width: 100%; display: block; }
+  .map-pin { animation: pin-in 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) both; }
+  @keyframes pin-in { from { opacity: 0; transform: scale(0); } to { opacity: 1; transform: scale(1); } }
+  .map-footer { margin-top: 14px; font-size: 14px; color: var(--text-dim); font-weight: 500; text-align: center; }
+
+  /* ---------- Floating avatars ---------- */
+  #avatars-layer { position: fixed; inset: 0; pointer-events: none; }
+  .av-bubble { position: absolute; display: flex; flex-direction: column; align-items: center; gap: 6px; animation: av-in 0.5s cubic-bezier(0.2, 1.3, 0.4, 1) both, av-float var(--dur, 6s) ease-in-out var(--delay, 0s) infinite alternate; }
+  @keyframes av-in { from { opacity: 0; transform: scale(0.4); } to { opacity: 1; transform: scale(1); } }
+  @keyframes av-float { from { margin-top: 0; } to { margin-top: 26px; } }
+  .av-circle { width: 62px; height: 62px; border-radius: 50%; overflow: hidden; border: 3px solid var(--accent); background: #2b3038; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 22px; color: #fff; box-shadow: 0 6px 18px rgba(0,0,0,0.45); }
+  .av-circle img { width: 100%; height: 100%; object-fit: cover; }
+  .av-name { background: var(--card); border-radius: 999px; padding: 4px 12px; font-size: 12.5px; font-weight: 700; max-width: 130px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
   /* ---------- Connection pill (only shows when something is down) ---------- */
   #confetti {
@@ -373,7 +418,47 @@
       <div class="ww-name" id="wheel-winner-name"></div>
     </div>
   </div>
+
+  <!-- Speedometer -->
+  <div id="meter-card" class="card hidden">
+    <div class="meter-question" id="meter-question"></div>
+    <svg id="meter-svg" viewBox="0 0 400 230"></svg>
+    <div class="meter-avg" id="meter-avg">–</div>
+    <div class="meter-sub" id="meter-sub">waiting for ratings</div>
+    <div class="meter-footer">type a number from 1 to 10 in chat</div>
+  </div>
+
+  <!-- Tug of war -->
+  <div id="tug-card" class="card hidden">
+    <div class="tug-question" id="tug-question"></div>
+    <div class="tug-names"><span class="tn-a" id="tug-name-a"></span><span class="tn-b" id="tug-name-b"></span></div>
+    <div class="tug-bar" id="tug-bar">
+      <div class="tug-side tug-a" id="tug-side-a"><span id="tug-count-a">0</span></div>
+      <div class="tug-side tug-b" id="tug-side-b"><span id="tug-count-b">0</span></div>
+    </div>
+    <div class="tug-winner-tag hidden" id="tug-winner-tag"></div>
+    <div class="tug-footer">
+      <span><span class="votes" id="tug-total">0</span> votes</span>
+      <span id="tug-hint">type A or B in chat</span>
+    </div>
+  </div>
+
+  <!-- Bullet points -->
+  <div id="bullets-card" class="card hidden">
+    <div class="bul-title" id="bul-title"></div>
+    <div class="bul-list" id="bul-list"></div>
+  </div>
+
+  <!-- World map -->
+  <div id="map-card" class="card hidden">
+    <div class="map-title">Where is everyone watching from?</div>
+    <svg id="map-svg" viewBox="0 0 1000 500"></svg>
+    <div class="map-footer">type your country in the chat</div>
+  </div>
 </div>
+
+<!-- Floating avatars (full-canvas layer, not a card) -->
+<div id="avatars-layer" class="hidden"></div>
 
 <canvas id="confetti"></canvas>
 
@@ -406,11 +491,16 @@
   var poll = { question: '', options: [], counts: [], votes: {}, ended: false };
   var cloud = { counts: {}, dirty: false };
   var wheel = { entries: [], rotation: 0 };
+  var meter = { values: {}, question: '' };
+  var tug = { options: ['A', 'B'], counts: [0, 0], votes: {}, decided: false };
+  var bullets = { title: '', items: [], active: 0 };
+  var mapw = { counts: {} };
+  var av = { seen: {}, order: [] };
 
   /* ============================================================
    * Widget switching
    * ============================================================ */
-  var cards = { poll: $('poll-card'), cloud: $('cloud-card'), wheel: $('wheel-card') };
+  var cards = { poll: $('poll-card'), cloud: $('cloud-card'), wheel: $('wheel-card'), meter: $('meter-card'), tug: $('tug-card'), bullets: $('bullets-card'), map: $('map-card'), avatars: $('avatars-layer') };
 
   function show(widget) {
     for (var k in cards) cards[k].classList.toggle('hidden', k !== widget);
@@ -616,12 +706,6 @@
       el.style.fontSize = Math.round(13 + scale * 49) + 'px';
       el.style.opacity = (0.45 + 0.55 * scale).toFixed(2);
       el.textContent = e[0];
-      if (rank <= 2 && e[1] > 1) {
-        var n = document.createElement('span');
-        n.className = 'cw-n';
-        n.textContent = '×' + e[1];
-        el.appendChild(n);
-      }
       box.appendChild(el);
     });
   }
@@ -822,6 +906,307 @@
   })();
 
   /* ============================================================
+   * Speedometer: audience rates 1-10, needle shows the average
+   * ============================================================ */
+  function drawMeter() {
+    var svg = $('meter-svg');
+    svg.innerHTML = '';
+    var cx = 200, cy = 200, rOut = 175, rIn = 118;
+    var colors = ['#D0453B','#D65B36','#DB7231','#DF8A2D','#E2A32B','#B3A335','#84A244','#57A052','#329E60','#1D9E75'];
+    for (var i = 0; i < 10; i++) {
+      var a0 = Math.PI - (i * Math.PI / 10) - 0.012;
+      var a1 = Math.PI - ((i + 1) * Math.PI / 10) + 0.012;
+      var p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      p.setAttribute('d',
+        'M ' + (cx + rOut * Math.cos(a0)).toFixed(1) + ' ' + (cy - rOut * Math.sin(a0)).toFixed(1) +
+        ' A ' + rOut + ' ' + rOut + ' 0 0 1 ' + (cx + rOut * Math.cos(a1)).toFixed(1) + ' ' + (cy - rOut * Math.sin(a1)).toFixed(1) +
+        ' L ' + (cx + rIn * Math.cos(a1)).toFixed(1) + ' ' + (cy - rIn * Math.sin(a1)).toFixed(1) +
+        ' A ' + rIn + ' ' + rIn + ' 0 0 0 ' + (cx + rIn * Math.cos(a0)).toFixed(1) + ' ' + (cy - rIn * Math.sin(a0)).toFixed(1) + ' Z');
+      p.setAttribute('fill', colors[i]);
+      svg.appendChild(p);
+      var mid = Math.PI - ((i + 0.5) * Math.PI / 10);
+      var rt = (rOut + rIn) / 2;
+      var t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      t.setAttribute('x', (cx + rt * Math.cos(mid)).toFixed(1));
+      t.setAttribute('y', (cy - rt * Math.sin(mid) + 8).toFixed(1));
+      t.setAttribute('fill', '#fff'); t.setAttribute('font-size', '24');
+      t.setAttribute('font-weight', '800'); t.setAttribute('text-anchor', 'middle');
+      t.setAttribute('font-family', "'Archivo', system-ui, sans-serif");
+      t.textContent = i + 1;
+      svg.appendChild(t);
+    }
+    var g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.setAttribute('id', 'meter-needle');
+    g.innerHTML = '<polygon points="200,52 193,200 207,200" fill="#fff"/>' +
+      '<circle cx="200" cy="200" r="15" fill="#fff"/><circle cx="200" cy="200" r="7" fill="rgba(18,20,25,0.9)"/>';
+    g.style.transform = 'rotate(-90deg)';
+    svg.appendChild(g);
+  }
+
+  function startMeter(cmd) {
+    meter.question = cmd.question || 'On a scale of 1 to 10?';
+    meter.values = (cmd.resume && cmd.resume.values) ? cmd.resume.values : {};
+    $('meter-question').textContent = meter.question;
+    drawMeter();
+    renderMeter();
+    show('meter');
+  }
+
+  function handleMeter(msg) {
+    if (active !== 'meter') return;
+    var m = msg.message.trim().match(/^(10|[1-9])\b/);
+    if (!m) return;
+    meter.values[msg.voterKey] = parseInt(m[1], 10);
+    renderMeter();
+  }
+
+  function renderMeter() {
+    var keys = Object.keys(meter.values);
+    var needle = document.getElementById('meter-needle');
+    if (!keys.length) {
+      $('meter-avg').textContent = '–';
+      $('meter-sub').textContent = 'waiting for ratings';
+      if (needle) needle.style.transform = 'rotate(-90deg)';
+      return;
+    }
+    var sum = 0;
+    keys.forEach(function (k) { sum += meter.values[k]; });
+    var avg = sum / keys.length;
+    $('meter-avg').textContent = (Math.round(avg * 10) / 10).toFixed(1);
+    $('meter-sub').textContent = keys.length + (keys.length === 1 ? ' rating' : ' ratings');
+    if (needle) needle.style.transform = 'rotate(' + (-90 + (avg - 1) / 9 * 180) + 'deg)';
+  }
+
+  /* ============================================================
+   * Tug of war: two options, one bar, the split slides live
+   * ============================================================ */
+  function startTug(cmd) {
+    tug.options = [(cmd.options && cmd.options[0]) || 'A', (cmd.options && cmd.options[1]) || 'B'];
+    tug.counts = (cmd.resume && cmd.resume.counts) ? cmd.resume.counts.slice(0, 2) : [0, 0];
+    tug.votes = (cmd.resume && cmd.resume.votes) ? cmd.resume.votes : {};
+    tug.decided = false;
+    $('tug-question').textContent = cmd.question || '';
+    $('tug-name-a').textContent = 'A · ' + tug.options[0];
+    $('tug-name-b').textContent = tug.options[1] + ' · B';
+    $('tug-bar').classList.remove('decided');
+    $('tug-side-a').classList.remove('loser');
+    $('tug-side-b').classList.remove('loser');
+    $('tug-winner-tag').classList.add('hidden');
+    $('tug-hint').textContent = 'type A or B in chat';
+    renderTug();
+    show('tug');
+  }
+
+  function handleTug(msg) {
+    if (active !== 'tug' || tug.decided) return;
+    var text = msg.message.trim();
+    var firstWord = (text.replace(/^[^A-Za-z]+/, '').split(/\s+/)[0] || '').replace(/[^A-Za-z]+$/, '');
+    if (firstWord.length !== 1) return;
+    var idx = firstWord.toUpperCase() === 'A' ? 0 : firstWord.toUpperCase() === 'B' ? 1 : -1;
+    if (idx < 0) return;
+    var prev = tug.votes[msg.voterKey];
+    if (prev === idx) return;
+    if (typeof prev === 'number') tug.counts[prev]--;
+    tug.votes[msg.voterKey] = idx;
+    tug.counts[idx]++;
+    renderTug();
+  }
+
+  function renderTug() {
+    var total = tug.counts[0] + tug.counts[1];
+    var pctA = total ? tug.counts[0] / total * 100 : 50;
+    pctA = Math.max(8, Math.min(92, pctA)); // both sides stay visible
+    $('tug-side-a').style.width = pctA + '%';
+    $('tug-side-b').style.width = (100 - pctA) + '%';
+    $('tug-count-a').textContent = tug.counts[0];
+    $('tug-count-b').textContent = tug.counts[1];
+    $('tug-total').textContent = total;
+  }
+
+  function revealTug() {
+    tug.decided = true;
+    $('tug-bar').classList.add('decided');
+    $('tug-hint').textContent = 'final result';
+    var tag = $('tug-winner-tag');
+    if (tug.counts[0] === tug.counts[1]) {
+      tag.textContent = "It's a tie!";
+    } else {
+      var w = tug.counts[0] > tug.counts[1] ? 0 : 1;
+      $(w === 0 ? 'tug-side-b' : 'tug-side-a').classList.add('loser');
+      tag.textContent = 'Winner: ' + tug.options[w];
+    }
+    tag.classList.remove('hidden');
+  }
+
+  /* ============================================================
+   * Bullet points: session agenda, host steps through items
+   * ============================================================ */
+  function showBullets(cmd) {
+    bullets.title = cmd.title || 'Coming up';
+    bullets.items = cmd.items || [];
+    bullets.active = Math.max(0, Math.min(cmd.active || 0, bullets.items.length - 1));
+    $('bul-title').textContent = bullets.title;
+    var list = $('bul-list');
+    list.innerHTML = '';
+    bullets.items.forEach(function (item, i) {
+      var el = document.createElement('div');
+      el.className = 'bul-item' + (i < bullets.active ? ' done' : i === bullets.active ? ' active' : '');
+      el.textContent = item;
+      list.appendChild(el);
+    });
+    show('bullets');
+  }
+
+  /* ============================================================
+   * World map: audience types their country, pins appear
+   * ============================================================ */
+  var COUNTRIES = {"afghanistan":[33,66],"albania":[41,20],"algeria":[28,3],"argentina":[-34,-64],"armenia":[40,45],"australia":[-25,134],"austria":[47,14],"azerbaijan":[40,47],"bangladesh":[24,90],"belarus":[53,28],"belgium":[50,4],"bolivia":[-17,-64],"bosnia":[44,18],"brazil":[-10,-52],"bulgaria":[43,25],"cambodia":[12,105],"cameroon":[5,12],"canada":[56,-106],"chile":[-32,-71],"china":[35,104],"colombia":[4,-73],"costa rica":[10,-84],"croatia":[45,16],"cuba":[22,-79],"cyprus":[35,33],"czech":[49,15],"czechia":[49,15],"denmark":[56,10],"dominican republic":[19,-70],"ecuador":[-1,-78],"egypt":[26,30],"estonia":[58,25],"ethiopia":[9,39],"finland":[62,26],"france":[46,2],"georgia":[42,43],"germany":[51,10],"ghana":[8,-1],"greece":[39,22],"guatemala":[15,-90],"honduras":[14,-86],"hungary":[47,19],"iceland":[65,-18],"india":[21,78],"indonesia":[-2,118],"iran":[32,53],"iraq":[33,43],"ireland":[53,-8],"israel":[31,35],"italy":[42,12],"jamaica":[18,-77],"japan":[36,138],"jordan":[31,36],"kazakhstan":[48,67],"kenya":[0,38],"kosovo":[42,21],"kuwait":[29,47],"latvia":[57,25],"lebanon":[34,36],"libya":[27,17],"lithuania":[55,24],"luxembourg":[49,6],"malaysia":[3,102],"malta":[36,14],"mexico":[23,-102],"moldova":[47,29],"mongolia":[46,105],"montenegro":[42,19],"morocco":[32,-6],"myanmar":[21,96],"nepal":[28,84],"netherlands":[52,5],"new zealand":[-42,172],"nicaragua":[13,-85],"nigeria":[9,8],"north macedonia":[41,21],"macedonia":[41,21],"norway":[61,9],"oman":[21,57],"pakistan":[30,69],"panama":[9,-80],"paraguay":[-23,-58],"peru":[-10,-76],"philippines":[13,122],"poland":[52,19],"portugal":[39,-8],"qatar":[25,51],"romania":[46,25],"russia":[60,90],"saudi arabia":[24,45],"senegal":[14,-14],"serbia":[44,21],"singapore":[1,104],"slovakia":[48,19],"slovenia":[46,15],"south africa":[-29,24],"south korea":[36,128],"korea":[36,128],"spain":[40,-4],"sri lanka":[8,81],"sweden":[62,15],"switzerland":[47,8],"syria":[35,38],"taiwan":[24,121],"tanzania":[-6,35],"thailand":[15,101],"tunisia":[34,9],"turkey":[39,35],"türkiye":[39,35],"uganda":[1,32],"ukraine":[49,32],"united arab emirates":[24,54],"uae":[24,54],"united kingdom":[54,-2],"uk":[54,-2],"england":[52,-1],"scotland":[56,-4],"united states":[38,-97],"usa":[38,-97],"us":[38,-97],"america":[38,-97],"uruguay":[-33,-56],"uzbekistan":[41,64],"venezuela":[7,-66],"vietnam":[16,106],"yemen":[15,48],"zimbabwe":[-19,30]};
+
+  // faint low-poly continents, [lon,lat] outlines, purely decorative
+  var CONTINENTS = [
+    [[-168,66],[-140,70],[-120,72],[-95,72],[-80,73],[-70,62],[-55,52],[-65,45],[-75,40],[-76,35],[-81,31],[-80,26],[-90,29],[-97,26],[-105,22],[-97,16],[-92,15],[-83,9],[-79,8],[-83,14],[-95,18],[-105,24],[-112,28],[-117,33],[-124,40],[-124,48],[-130,55],[-145,60],[-155,58],[-166,62]],
+    [[-79,8],[-72,11],[-62,10],[-52,4],[-42,-3],[-35,-8],[-39,-14],[-40,-22],[-48,-26],[-53,-33],[-58,-39],[-65,-47],[-70,-54],[-73,-48],[-72,-40],[-70,-30],[-70,-18],[-76,-10],[-80,-3],[-78,3]],
+    [[-9,35],[3,37],[10,37],[20,32],[32,31],[35,27],[43,11],[51,10],[48,3],[41,-2],[40,-11],[36,-19],[33,-26],[27,-34],[20,-35],[16,-29],[12,-18],[9,-7],[9,2],[6,5],[-2,5],[-8,4],[-13,9],[-17,15],[-16,21],[-10,28]],
+    [[-9,43],[-2,44],[0,49],[-4,58],[5,62],[10,65],[18,70],[28,71],[30,60],[24,57],[21,55],[14,54],[8,54],[5,52],[0,50],[-5,48],[-9,43]],
+    [[30,60],[40,67],[60,69],[75,72],[95,76],[110,73],[130,71],[150,68],[170,66],[178,64],[170,60],[160,60],[157,52],[142,46],[135,43],[128,39],[122,30],[121,23],[108,18],[104,10],[100,6],[98,10],[92,20],[88,22],[80,15],[77,8],[72,20],[66,24],[57,25],[52,25],[48,29],[44,37],[36,36],[27,40],[26,45],[36,45],[48,42],[50,50],[40,55],[30,60]],
+    [[113,-22],[122,-17],[131,-12],[137,-15],[142,-11],[146,-19],[150,-25],[153,-30],[150,-37],[144,-38],[140,-38],[135,-35],[129,-32],[124,-33],[115,-34],[113,-27]],
+    [[-45,60],[-40,64],[-32,68],[-22,70],[-25,76],[-38,80],[-55,80],[-68,78],[-73,76],[-68,70],[-58,66],[-52,62]]
+  ];
+
+  function projMap(lat, lon) {
+    return [(lon + 180) / 360 * 1000, (90 - lat) / 180 * 500];
+  }
+
+  function drawMapBase() {
+    var svg = $('map-svg');
+    svg.innerHTML = '';
+    // graticule
+    for (var lon = -150; lon <= 150; lon += 30) {
+      var l = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      var x = projMap(0, lon)[0];
+      l.setAttribute('x1', x); l.setAttribute('y1', 20); l.setAttribute('x2', x); l.setAttribute('y2', 480);
+      l.setAttribute('stroke', 'rgba(255,255,255,0.05)'); l.setAttribute('stroke-width', '1');
+      svg.appendChild(l);
+    }
+    for (var lat = -60; lat <= 60; lat += 30) {
+      var l2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      var y = projMap(lat, 0)[1];
+      l2.setAttribute('x1', 10); l2.setAttribute('y1', y); l2.setAttribute('x2', 990); l2.setAttribute('y2', y);
+      l2.setAttribute('stroke', 'rgba(255,255,255,0.05)'); l2.setAttribute('stroke-width', '1');
+      svg.appendChild(l2);
+    }
+    CONTINENTS.forEach(function (poly) {
+      var pts = poly.map(function (p) { return projMap(p[1], p[0]).map(function (n) { return n.toFixed(0); }).join(','); }).join(' ');
+      var pg = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+      pg.setAttribute('points', pts);
+      pg.setAttribute('fill', 'rgba(255,255,255,0.07)');
+      svg.appendChild(pg);
+    });
+    var pins = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    pins.setAttribute('id', 'map-pins');
+    svg.appendChild(pins);
+  }
+
+  function startMap(cmd) {
+    mapw.counts = (cmd.resume && cmd.resume.counts) ? cmd.resume.counts : {};
+    drawMapBase();
+    renderMapPins();
+    show('map');
+  }
+
+  function feedMap(msg) {
+    if (active !== 'map') return;
+    var text = ' ' + msg.message.toLowerCase().replace(/[^a-zçëüöäéáíñ ]/g, ' ') + ' ';
+    var hit = false;
+    for (var name in COUNTRIES) {
+      if (text.indexOf(' ' + name + ' ') !== -1) {
+        mapw.counts[name] = (mapw.counts[name] || 0) + 1;
+        hit = true;
+      }
+    }
+    if (hit) renderMapPins();
+  }
+
+  function renderMapPins() {
+    var g = document.getElementById('map-pins');
+    if (!g) return;
+    g.innerHTML = '';
+    // merge aliases onto one pin per coordinate
+    var byCoord = {};
+    for (var name in mapw.counts) {
+      var c = COUNTRIES[name];
+      var key = c[0] + ',' + c[1];
+      if (!byCoord[key]) byCoord[key] = { lat: c[0], lon: c[1], n: 0, name: name };
+      byCoord[key].n += mapw.counts[name];
+      if (name.length > byCoord[key].name.length) byCoord[key].name = name;
+    }
+    Object.keys(byCoord).forEach(function (k) {
+      var e = byCoord[k];
+      var xy = projMap(e.lat, e.lon);
+      var pin = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      pin.setAttribute('class', 'map-pin');
+      pin.setAttribute('transform', 'translate(' + xy[0].toFixed(0) + ' ' + xy[1].toFixed(0) + ')');
+      var label = e.name.replace(/\b\w/g, function (ch) { return ch.toUpperCase(); }) + (e.n > 1 ? ' ×' + e.n : '');
+      pin.innerHTML =
+        '<circle r="12" fill="rgba(29,158,117,0.3)"/>' +
+        '<circle r="5.5" fill="#1D9E75" stroke="#fff" stroke-width="1.5"/>' +
+        '<text y="-16" text-anchor="middle" fill="#fff" font-size="15" font-weight="700" font-family="Archivo, system-ui, sans-serif" style="paint-order: stroke; stroke: rgba(18,20,25,0.9); stroke-width: 4px;">' + label + '</text>';
+      g.appendChild(pin);
+    });
+  }
+
+  /* ============================================================
+   * Floating avatars: everyone who chats pops up as a bubble
+   * ============================================================ */
+  function startAvatars() {
+    av.seen = {};
+    av.order = [];
+    $('avatars-layer').innerHTML = '';
+    show('avatars');
+  }
+
+  function feedAvatars(msg) {
+    if (active !== 'avatars' || !msg.name || av.seen[msg.voterKey]) return;
+    av.seen[msg.voterKey] = true;
+    var layer = $('avatars-layer');
+    var b = document.createElement('div');
+    b.className = 'av-bubble';
+    // random spot, kept off the vertical center strip where the host usually is
+    var x = Math.random() < 0.5 ? 4 + Math.random() * 24 : 68 + Math.random() * 24;
+    b.style.left = x + '%';
+    b.style.top = (8 + Math.random() * 68) + '%';
+    b.style.setProperty('--dur', (5 + Math.random() * 4).toFixed(1) + 's');
+    b.style.setProperty('--delay', (-Math.random() * 5).toFixed(1) + 's');
+    var circle = document.createElement('div');
+    circle.className = 'av-circle';
+    var img = msg.raw && (msg.raw.chatimg || msg.raw.chatimage);
+    if (img && /^https?:/.test(img)) {
+      var im = document.createElement('img');
+      im.src = img;
+      im.onerror = function () { circle.removeChild(im); circle.textContent = initials(msg.name); };
+      circle.appendChild(im);
+    } else {
+      circle.textContent = initials(msg.name);
+    }
+    var nm = document.createElement('div');
+    nm.className = 'av-name';
+    nm.textContent = msg.name;
+    b.appendChild(circle);
+    b.appendChild(nm);
+    layer.appendChild(b);
+    av.order.push(b);
+    if (av.order.length > 12) {
+      var oldest = av.order.shift();
+      if (oldest.parentNode) oldest.parentNode.removeChild(oldest);
+    }
+  }
+
+  function initials(name) {
+    var parts = name.trim().split(/\s+/);
+    return (parts[0][0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
+  }
+
+  /* ============================================================
    * Wiring: relay connections
    * ============================================================ */
   var connState = { chat: 'connecting', control: 'connecting' };
@@ -853,7 +1238,13 @@
           case 'wheel:show':  showWheel(cmd); break;
           case 'wheel:spin':  spinWheel(cmd); break;
           case 'wheel:reset': hideAll(); break;
-          case 'hide':        hideAll(); break;
+          case 'meter:start':   startMeter(cmd); break;
+        case 'tug:start':     startTug(cmd); break;
+        case 'tug:reveal':    revealTug(); break;
+        case 'bullets:show':  showBullets(cmd); break;
+        case 'map:start':     startMap(cmd); break;
+        case 'avatars:start': startAvatars(); break;
+        case 'hide':        hideAll(); break;
           // 'trigger' and 'overlay:hello' are panel-side; ignore here
         }
       }
@@ -864,6 +1255,10 @@
       onMessage: function (msg) {
         handleVote(msg);
         feedCloud(msg);
+        handleMeter(msg);
+        handleTug(msg);
+        feedMap(msg);
+        feedAvatars(msg);
       }
     });
 

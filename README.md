@@ -52,8 +52,19 @@ These are plain SSN API calls of the form `https://io.socialstream.ninja/SESSION
 - **The panel's tally and the overlay's tally** are counted independently from the same chat stream with the same rule, so they match unless one side missed messages while reconnecting.
 - **Reconnects**: both connections retry automatically with backoff (1s → 15s cap) and send keepalive pings. A small pill appears in the overlay's corner only while something is down.
 - Poll options: 2–6. Wheel needs at least 2 entries to spin. Word cloud filters ~150 common English stopwords, URLs, and pure numbers, keeps the top 60 words.
+- **Message to chat**: the box under the widget tabs posts a message into the actual meeting chat through SSN's sendEncodedChat action. It needs "Enable remote API control of extension" on (which you already have) and the Zoom/Meet tab that SSN is scraping must be open and not minimized, since SSN types the message into that tab. Test it once in a throwaway meeting before relying on it live.
 - **Wheel winner**: when the wheel lands, a full-screen confetti burst plays over the overlay for a few seconds, then clears itself. It respects reduced-motion settings.
 - **Quiz mode**: click the ✓ next to an option before going live to mark it as the correct answer. The overlay gives nothing away while voting runs. Hit "Reveal answer" (hotkey A, or the poll-reveal Stream Deck URL) to end the poll, light the correct option up in gold, and show who answered right first. First place goes to the first person who votes the correct option and is locked in even if they change their vote afterward. Leave the ✓ off and the poll behaves exactly as before.
+
+## The extra overlays
+
+- **Tug of war**: a two-option poll drawn as a single bar that shifts live as A and B votes come in. "Reveal winner" freezes it, dims the losing side, and names the winner.
+- **Meter (speedometer)**: ask a 1 to 10 question, people type a number in chat, the needle points at the live average. One rating per person, changeable.
+- **Bullets**: an on-screen agenda on the right side. Type items one per line, show it, then step through with Next/Back (N and B keys, or Stream Deck). Done items dim, the current one glows.
+- **World map**: ask people to type their country in chat. Pins with counts appear on a stylized dark map. Around 130 English country names and common short forms (USA, UK, UAE, Korea) are recognized. It's chat-based, not automatic geolocation, because Zoom/Meet don't expose location.
+- **Avatars**: everyone who chats pops up as a floating bubble with their name, and their photo when the platform provides one (initials otherwise). Newest 12 stay up. Good as a welcome moment.
+
+All five resync after an OBS refresh like the poll does, and all have Stream Deck URLs (tug-live, tug-reveal, meter-live, bullets-live, bullets-next, bullets-prev, map-live, avatars-live). The full clickable list is generated in the control panel footer.
 
 ## Putting it on GitHub
 
