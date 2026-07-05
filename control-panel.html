@@ -3,21 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Webinar control panel</title>
+<title>Kejdis CP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #f4f3f0;
-    --panel: #ffffff;
-    --ink: #1b1e24;
-    --ink-soft: #6b6f78;
-    --line: #e3e1db;
+    --bg: #17191d;        /* close to OBS's default dock background */
+    --panel: #22252b;
+    --ink: #e8eaed;
+    --ink-soft: #9aa0ab;
+    --line: #34383f;
     --accent: #1D9E75;
-    --accent-ink: #0d5c43;
+    --accent-ink: #4cc79a;
     --gold: #E3A93C;
-    --gold-ink: #8a6410;
-    --danger: #c0442f;
+    --gold-ink: #f0c469;
+    --danger: #e06050;
     --radius: 14px;
     --font: 'Archivo', system-ui, -apple-system, 'Segoe UI', sans-serif;
   }
@@ -25,6 +25,7 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   body {
+    color-scheme: dark;
     background: var(--bg);
     font-family: var(--font);
     color: var(--ink);
@@ -57,7 +58,7 @@
     display: inline-block;
     width: 9px; height: 9px;
     border-radius: 50%;
-    background: #c9c6bf;
+    background: #4a4f59;
     margin-right: 5px;
     vertical-align: 1px;
   }
@@ -67,27 +68,23 @@
 
   /* ---------- session bar ---------- */
   .session-bar {
-    background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
-    padding: 14px 16px;
     display: flex;
     align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-    margin-bottom: 18px;
+    gap: 6px;
+    margin-bottom: 12px;
   }
-  .session-bar label { font-size: 13px; font-weight: 600; color: var(--ink-soft); }
   .session-bar input {
     flex: 1;
-    min-width: 160px;
+    min-width: 120px;
     font: inherit;
-    font-size: 14px;
-    padding: 8px 12px;
+    font-size: 12.5px;
+    color: var(--ink);
+    padding: 6px 10px;
     border: 1px solid var(--line);
-    border-radius: 9px;
-    background: var(--bg);
+    border-radius: 8px;
+    background: var(--panel);
   }
+  .session-bar button { font-size: 12.5px; padding: 7px 12px; }
   .session-bar input:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent; }
 
   /* ---------- buttons ---------- */
@@ -99,38 +96,39 @@
     border-radius: 10px;
     padding: 10px 16px;
     cursor: pointer;
-    background: #e9e7e1;
+    background: #2c313a;
     color: var(--ink);
     transition: background 0.15s, transform 0.05s;
   }
-  button:hover { background: #dedbd3; }
+  button:hover { background: #363c47; }
   button:active { transform: scale(0.98); }
   button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  button.primary { background: var(--ink); color: #fff; }
-  button.primary:hover { background: #2c313b; }
+  button.primary { background: var(--ink); color: #14161a; }
+  button.primary:hover { background: #ffffff; }
   button.live { background: var(--accent); color: #fff; }
   button.live:hover { background: #178a66; }
   button.ghost { background: transparent; color: var(--ink-soft); }
-  button.ghost:hover { background: #e9e7e1; color: var(--ink); }
+  button.ghost:hover { background: rgba(255,255,255,0.08); color: var(--ink); }
   button.danger-ghost { background: transparent; color: var(--danger); }
-  button.danger-ghost:hover { background: #f7e8e4; }
+  button.danger-ghost:hover { background: rgba(224,96,80,0.14); }
   button:disabled { opacity: 0.45; cursor: default; transform: none; }
   kbd {
     font-family: inherit;
     font-size: 11px;
     font-weight: 700;
-    background: rgba(0,0,0,0.14);
+    background: rgba(255,255,255,0.14);
     border-radius: 5px;
     padding: 1px 6px;
     margin-left: 8px;
   }
-  button.primary kbd, button.live kbd { background: rgba(255,255,255,0.22); }
+  button.primary kbd { background: rgba(0,0,0,0.15); }
+  button.live kbd { background: rgba(255,255,255,0.22); }
 
   /* ---------- tabs ---------- */
   .tabs {
     display: flex;
     gap: 4px;
-    background: #e9e7e1;
+    background: #101216;
     border-radius: 12px;
     padding: 4px;
     margin-bottom: 18px;
@@ -142,8 +140,8 @@
     padding: 10px 8px;
     position: relative;
   }
-  .tabs button:hover { color: var(--ink); background: rgba(255,255,255,0.5); }
-  .tabs button.active { background: var(--panel); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .tabs button:hover { color: var(--ink); background: rgba(255,255,255,0.06); }
+  .tabs button.active { background: var(--panel); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,0.35); }
   .tabs .on-air {
     display: inline-block;
     width: 8px; height: 8px;
@@ -203,11 +201,11 @@
     border-radius: 9px;
     background: var(--bg);
     border: 1px solid var(--line);
-    color: #c9c6bf;
+    color: #565c67;
     font-size: 16px;
     font-weight: 800;
   }
-  .opt-row .ok-toggle:hover { border-color: var(--gold); color: var(--gold-ink); background: #faf3e3; }
+  .opt-row .ok-toggle:hover { border-color: var(--gold); color: var(--gold-ink); background: rgba(227,169,60,0.12); }
   .opt-row.is-correct .ok-toggle { background: var(--gold); border-color: var(--gold); color: #3d2e07; }
   .opt-row.is-correct input { border-color: var(--gold); }
 
@@ -275,7 +273,7 @@
     width: 20px; height: 20px;
     padding: 0;
     border-radius: 50%;
-    background: #dedbd3;
+    background: #3a3f49;
     font-size: 12px;
     line-height: 1;
   }
@@ -287,8 +285,8 @@
 
   .winner-note {
     margin-top: 16px;
-    background: #e8f5f0;
-    border: 1px solid #bfe4d6;
+    background: rgba(29,158,117,0.12);
+    border: 1px solid rgba(29,158,117,0.35);
     color: var(--accent-ink);
     border-radius: 12px;
     padding: 13px 16px;
@@ -302,14 +300,14 @@
     color: var(--ink-soft);
     line-height: 1.8;
   }
-  footer kbd { background: #e3e1db; color: var(--ink); }
+  footer kbd { background: #2c313a; color: var(--ink); }
 
   #sd-block { margin-top: 12px; }
   #sd-urls { margin: 10px 0 8px; display: flex; flex-direction: column; gap: 5px; }
   .sd-url {
     font-family: ui-monospace, 'SF Mono', Menlo, monospace;
     font-size: 12.5px;
-    background: #fff;
+    background: var(--panel);
     border: 1px solid var(--line);
     border-radius: 8px;
     padding: 7px 11px;
@@ -320,7 +318,7 @@
   }
   .sd-url:hover { border-color: var(--accent); }
   .sd-url b { color: var(--accent-ink); }
-  .sd-url.copied { background: #e8f5f0; border-color: var(--accent); }
+  .sd-url.copied { background: rgba(29,158,117,0.15); border-color: var(--accent); }
   .sd-hint { font-size: 12px; color: var(--ink-soft); }
 
   .toast {
@@ -328,7 +326,7 @@
     left: 50%; bottom: 24px;
     transform: translateX(-50%) translateY(70px);
     background: var(--ink);
-    color: #fff;
+    color: #14161a;
     font-size: 14px;
     font-weight: 600;
     padding: 11px 18px;
@@ -355,7 +353,7 @@
 
 <div class="wrap" id="main-view">
   <header>
-    <h1>Webinar toolkit <span>control panel</span></h1>
+    <h1>Kejdis <span>CP</span></h1>
     <div class="conn">
       <span><span class="dot" id="dot-chat"></span>chat</span>
       <span><span class="dot" id="dot-control"></span>overlay link</span>
@@ -364,8 +362,7 @@
   </header>
 
   <div class="session-bar">
-    <label for="session-input">SSN session ID</label>
-    <input id="session-input" type="text" placeholder="the session ID from Social Stream Ninja" spellcheck="false" autocomplete="off">
+    <input id="session-input" type="text" placeholder="SSN session ID" spellcheck="false" autocomplete="off" title="Your Social Stream Ninja session ID">
     <button class="primary" id="btn-session">Connect</button>
   </div>
 

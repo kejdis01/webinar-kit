@@ -52,6 +52,7 @@ These are plain SSN API calls of the form `https://io.socialstream.ninja/SESSION
 - **The panel's tally and the overlay's tally** are counted independently from the same chat stream with the same rule, so they match unless one side missed messages while reconnecting.
 - **Reconnects**: both connections retry automatically with backoff (1s → 15s cap) and send keepalive pings. A small pill appears in the overlay's corner only while something is down.
 - Poll options: 2–6. Wheel needs at least 2 entries to spin. Word cloud filters ~150 common English stopwords, URLs, and pure numbers, keeps the top 60 words.
+- **Wheel winner**: when the wheel lands, a full-screen confetti burst plays over the overlay for a few seconds, then clears itself. It respects reduced-motion settings.
 - **Quiz mode**: click the ✓ next to an option before going live to mark it as the correct answer. The overlay gives nothing away while voting runs. Hit "Reveal answer" (hotkey A, or the poll-reveal Stream Deck URL) to end the poll, light the correct option up in gold, and show who answered right first. First place goes to the first person who votes the correct option and is locked in even if they change their vote afterward. Leave the ✓ off and the poll behaves exactly as before.
 
 ## Putting it on GitHub
