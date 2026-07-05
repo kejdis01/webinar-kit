@@ -515,7 +515,7 @@
   <!-- ============ MAP ============ -->
   <div class="panel hidden" id="panel-map">
     <p style="font-size:14px; color:var(--ink-soft); line-height:1.6; margin-bottom:16px;">
-      Ask the audience to <b>type their country in the chat</b>. Pins appear on the overlay map as countries are mentioned. About 130 country names and common short forms (USA, UK, UAE) are recognized, in English.
+      Ask the audience to <b>type their city or country in the chat</b>. Each person gets one pin; if someone corrects themselves, their pin moves instead of double counting. Around 130 countries and 185 major cities are recognized in English, plus short forms like USA, UK, and UAE. Typing both, like Tirana Albania, pins the city only.
     </p>
     <div class="actions" style="margin-top:0; padding-top:0; border-top:none;">
       <button class="live" id="btn-map-live">Go live on overlay</button>
@@ -591,9 +591,9 @@
   var tug = { live: false, decided: false, question: '', options: [], counts: [0, 0], votes: {} };
   var meter = { live: false, question: '', values: {} };
   var bullets = { title: '', items: [], active: 0, shown: false };
-  var mapw = { live: false, counts: {} };
+  var mapw = { live: false, counts: {}, users: {} };
   var avat = { live: false };
-  var PANEL_COUNTRIES = null; // filled below, shared with the map widget
+  // location matching lives in ssn-link.js (SSNLink.matchLocation)
 
   var control = null;
 
@@ -741,17 +741,22 @@
         renderMeterStatus();
       }
     }
-    // map country mirror
-    if (mapw.live && PANEL_COUNTRIES) {
-      var lowered = ' ' + msg.message.toLowerCase().replace(/[^a-zçëüöäéáíñ ]/g, ' ') + ' ';
-      var hit = false;
-      for (var cn in PANEL_COUNTRIES) {
-        if (lowered.indexOf(' ' + cn + ' ') !== -1) {
-          mapw.counts[cn] = (mapw.counts[cn] || 0) + 1;
-          hit = true;
+    // map location mirror, one place per person
+    if (mapw.live) {
+      var loc = SSNLink.matchLocation(msg.message);
+      if (loc) {
+        var lkey = loc.type + ':' + loc.key;
+        var lprev = mapw.users[msg.voterKey];
+        if (lprev !== lkey) {
+          if (lprev && mapw.counts[lprev]) {
+            mapw.counts[lprev]--;
+            if (mapw.counts[lprev] <= 0) delete mapw.counts[lprev];
+          }
+          mapw.users[msg.voterKey] = lkey;
+          mapw.counts[lkey] = (mapw.counts[lkey] || 0) + 1;
+          renderMapStatus();
         }
       }
-      if (hit) renderMapStatus();
     }
     // cloud counters mirror
     if (cloud.live) {
@@ -797,7 +802,7 @@
       } else if (liveWidget === 'bullets' && bullets.shown) {
         send(bulletsPayload());
       } else if (liveWidget === 'map' && mapw.live) {
-        send({ cmd: 'map:start', resume: { counts: mapw.counts } });
+        send({ cmd: 'map:start', resume: { counts: mapw.counts, users: mapw.users } });
       } else if (liveWidget === 'avatars' && avat.live) {
         send({ cmd: 'avatars:start' });
       }
@@ -1249,11 +1254,10 @@
   /* ============================================================
    * Map
    * ============================================================ */
-  PANEL_COUNTRIES = {"afghanistan":1,"albania":1,"algeria":1,"argentina":1,"armenia":1,"australia":1,"austria":1,"azerbaijan":1,"bangladesh":1,"belarus":1,"belgium":1,"bolivia":1,"bosnia":1,"brazil":1,"bulgaria":1,"cambodia":1,"cameroon":1,"canada":1,"chile":1,"china":1,"colombia":1,"costa rica":1,"croatia":1,"cuba":1,"cyprus":1,"czech":1,"czechia":1,"denmark":1,"dominican republic":1,"ecuador":1,"egypt":1,"estonia":1,"ethiopia":1,"finland":1,"france":1,"georgia":1,"germany":1,"ghana":1,"greece":1,"guatemala":1,"honduras":1,"hungary":1,"iceland":1,"india":1,"indonesia":1,"iran":1,"iraq":1,"ireland":1,"israel":1,"italy":1,"jamaica":1,"japan":1,"jordan":1,"kazakhstan":1,"kenya":1,"kosovo":1,"kuwait":1,"latvia":1,"lebanon":1,"libya":1,"lithuania":1,"luxembourg":1,"malaysia":1,"malta":1,"mexico":1,"moldova":1,"mongolia":1,"montenegro":1,"morocco":1,"myanmar":1,"nepal":1,"netherlands":1,"new zealand":1,"nicaragua":1,"nigeria":1,"north macedonia":1,"macedonia":1,"norway":1,"oman":1,"pakistan":1,"panama":1,"paraguay":1,"peru":1,"philippines":1,"poland":1,"portugal":1,"qatar":1,"romania":1,"russia":1,"saudi arabia":1,"senegal":1,"serbia":1,"singapore":1,"slovakia":1,"slovenia":1,"south africa":1,"south korea":1,"korea":1,"spain":1,"sri lanka":1,"sweden":1,"switzerland":1,"syria":1,"taiwan":1,"tanzania":1,"thailand":1,"tunisia":1,"turkey":1,"türkiye":1,"uganda":1,"ukraine":1,"united arab emirates":1,"uae":1,"united kingdom":1,"uk":1,"england":1,"scotland":1,"united states":1,"usa":1,"us":1,"america":1,"uruguay":1,"uzbekistan":1,"venezuela":1,"vietnam":1,"yemen":1,"zimbabwe":1};
 
   function goLiveMap() {
     stopAllLive();
-    mapw = { live: true, counts: {} };
+    mapw = { live: true, counts: {}, users: {} };
     send({ cmd: 'map:start' });
     setAir('map');
     switchTab('map');
@@ -1264,9 +1268,11 @@
 
   function renderMapStatus() {
     var names = Object.keys(mapw.counts);
-    $('map-status').textContent = mapw.live ? names.length + ' countries' : '';
+    $('map-status').textContent = mapw.live ? names.length + ' places' : '';
     $('map-detected').textContent = names.length
-      ? 'Detected: ' + names.map(function (n) { return n + ' (' + mapw.counts[n] + ')'; }).join(' · ')
+      ? 'Detected: ' + names.map(function (n) {
+          return n.slice(n.indexOf(':') + 1) + ' (' + mapw.counts[n] + ')';
+        }).join(' · ')
       : '';
   }
 

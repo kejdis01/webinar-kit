@@ -494,7 +494,7 @@
   var meter = { values: {}, question: '' };
   var tug = { options: ['A', 'B'], counts: [0, 0], votes: {}, decided: false };
   var bullets = { title: '', items: [], active: 0 };
-  var mapw = { counts: {} };
+  var mapw = { counts: {}, users: {} };
   var av = { seen: {}, order: [] };
 
   /* ============================================================
@@ -1060,7 +1060,7 @@
   /* ============================================================
    * World map: audience types their country, pins appear
    * ============================================================ */
-  var COUNTRIES = {"afghanistan":[33,66],"albania":[41,20],"algeria":[28,3],"argentina":[-34,-64],"armenia":[40,45],"australia":[-25,134],"austria":[47,14],"azerbaijan":[40,47],"bangladesh":[24,90],"belarus":[53,28],"belgium":[50,4],"bolivia":[-17,-64],"bosnia":[44,18],"brazil":[-10,-52],"bulgaria":[43,25],"cambodia":[12,105],"cameroon":[5,12],"canada":[56,-106],"chile":[-32,-71],"china":[35,104],"colombia":[4,-73],"costa rica":[10,-84],"croatia":[45,16],"cuba":[22,-79],"cyprus":[35,33],"czech":[49,15],"czechia":[49,15],"denmark":[56,10],"dominican republic":[19,-70],"ecuador":[-1,-78],"egypt":[26,30],"estonia":[58,25],"ethiopia":[9,39],"finland":[62,26],"france":[46,2],"georgia":[42,43],"germany":[51,10],"ghana":[8,-1],"greece":[39,22],"guatemala":[15,-90],"honduras":[14,-86],"hungary":[47,19],"iceland":[65,-18],"india":[21,78],"indonesia":[-2,118],"iran":[32,53],"iraq":[33,43],"ireland":[53,-8],"israel":[31,35],"italy":[42,12],"jamaica":[18,-77],"japan":[36,138],"jordan":[31,36],"kazakhstan":[48,67],"kenya":[0,38],"kosovo":[42,21],"kuwait":[29,47],"latvia":[57,25],"lebanon":[34,36],"libya":[27,17],"lithuania":[55,24],"luxembourg":[49,6],"malaysia":[3,102],"malta":[36,14],"mexico":[23,-102],"moldova":[47,29],"mongolia":[46,105],"montenegro":[42,19],"morocco":[32,-6],"myanmar":[21,96],"nepal":[28,84],"netherlands":[52,5],"new zealand":[-42,172],"nicaragua":[13,-85],"nigeria":[9,8],"north macedonia":[41,21],"macedonia":[41,21],"norway":[61,9],"oman":[21,57],"pakistan":[30,69],"panama":[9,-80],"paraguay":[-23,-58],"peru":[-10,-76],"philippines":[13,122],"poland":[52,19],"portugal":[39,-8],"qatar":[25,51],"romania":[46,25],"russia":[60,90],"saudi arabia":[24,45],"senegal":[14,-14],"serbia":[44,21],"singapore":[1,104],"slovakia":[48,19],"slovenia":[46,15],"south africa":[-29,24],"south korea":[36,128],"korea":[36,128],"spain":[40,-4],"sri lanka":[8,81],"sweden":[62,15],"switzerland":[47,8],"syria":[35,38],"taiwan":[24,121],"tanzania":[-6,35],"thailand":[15,101],"tunisia":[34,9],"turkey":[39,35],"türkiye":[39,35],"uganda":[1,32],"ukraine":[49,32],"united arab emirates":[24,54],"uae":[24,54],"united kingdom":[54,-2],"uk":[54,-2],"england":[52,-1],"scotland":[56,-4],"united states":[38,-97],"usa":[38,-97],"us":[38,-97],"america":[38,-97],"uruguay":[-33,-56],"uzbekistan":[41,64],"venezuela":[7,-66],"vietnam":[16,106],"yemen":[15,48],"zimbabwe":[-19,30]};
+  // country and city data lives in ssn-link.js (SSNLink.GEO)
 
   // faint low-poly continents, [lon,lat] outlines, purely decorative
   var CONTINENTS = [
@@ -1109,6 +1109,7 @@
 
   function startMap(cmd) {
     mapw.counts = (cmd.resume && cmd.resume.counts) ? cmd.resume.counts : {};
+    mapw.users = (cmd.resume && cmd.resume.users) ? cmd.resume.users : {};
     drawMapBase();
     renderMapPins();
     show('map');
@@ -1116,28 +1117,33 @@
 
   function feedMap(msg) {
     if (active !== 'map') return;
-    var text = ' ' + msg.message.toLowerCase().replace(/[^a-zçëüöäéáíñ ]/g, ' ') + ' ';
-    var hit = false;
-    for (var name in COUNTRIES) {
-      if (text.indexOf(' ' + name + ' ') !== -1) {
-        mapw.counts[name] = (mapw.counts[name] || 0) + 1;
-        hit = true;
-      }
+    var loc = SSNLink.matchLocation(msg.message);
+    if (!loc) return;
+    var key = loc.type + ':' + loc.key;
+    var prev = mapw.users[msg.voterKey];
+    if (prev === key) return; // same person, same place, nothing new
+    if (prev && mapw.counts[prev]) {
+      mapw.counts[prev]--; // they corrected themselves, move the pin
+      if (mapw.counts[prev] <= 0) delete mapw.counts[prev];
     }
-    if (hit) renderMapPins();
+    mapw.users[msg.voterKey] = key;
+    mapw.counts[key] = (mapw.counts[key] || 0) + 1;
+    renderMapPins();
   }
 
   function renderMapPins() {
     var g = document.getElementById('map-pins');
     if (!g) return;
     g.innerHTML = '';
-    // merge aliases onto one pin per coordinate
+    // merge aliases (usa / united states, kyiv / kiev) onto one pin per coordinate
     var byCoord = {};
-    for (var name in mapw.counts) {
-      var c = COUNTRIES[name];
+    for (var full in mapw.counts) {
+      var type = full.split(':')[0], name = full.slice(full.indexOf(':') + 1);
+      var c = (type === 'city' ? SSNLink.GEO.cities : SSNLink.GEO.countries)[name];
+      if (!c) continue;
       var key = c[0] + ',' + c[1];
       if (!byCoord[key]) byCoord[key] = { lat: c[0], lon: c[1], n: 0, name: name };
-      byCoord[key].n += mapw.counts[name];
+      byCoord[key].n += mapw.counts[full];
       if (name.length > byCoord[key].name.length) byCoord[key].name = name;
     }
     Object.keys(byCoord).forEach(function (k) {
