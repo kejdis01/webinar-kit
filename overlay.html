@@ -14,6 +14,7 @@
     --text-dim: rgba(255, 255, 255, 0.55);
     --accent: #1D9E75;
     --accent-soft: rgba(29, 158, 117, 0.25);
+    --gold: #E8B33F;
     --radius: 18px;
     --font: 'Archivo', system-ui, -apple-system, 'Segoe UI', sans-serif;
   }
@@ -115,6 +116,31 @@
     transition: color 0.4s;
   }
   .poll-row.leading .poll-pct { color: var(--accent); }
+
+  /* quiz reveal: the correct answer goes gold */
+  .poll-row.correct .poll-letter { background: var(--gold); color: #3d2e07; }
+  .poll-row.correct .poll-fill { background: var(--gold); }
+  .poll-row.correct .poll-pct { color: var(--gold); }
+  .poll-row.correct .poll-label::after {
+    content: ' ✓ correct';
+    color: var(--gold);
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+  }
+
+  .poll-first {
+    margin-top: 16px;
+    background: rgba(232, 179, 63, 0.14);
+    border: 1px solid rgba(232, 179, 63, 0.45);
+    border-radius: 12px;
+    padding: 13px 16px;
+    font-size: 16px;
+    font-weight: 700;
+    text-align: center;
+    animation: card-in 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.05) both;
+  }
+  .poll-first b { color: var(--gold); }
 
   .poll-footer {
     margin-top: 22px;
@@ -300,6 +326,7 @@
   <div id="poll-card" class="card hidden">
     <div class="poll-question" id="poll-question"></div>
     <div id="poll-rows"></div>
+    <div class="poll-first hidden" id="poll-first"></div>
     <div class="poll-footer" id="poll-footer">
       <span><span class="votes" id="poll-count">0</span> <span id="poll-count-word">votes</span></span>
       <span class="hint" id="poll-hint"></span>
@@ -428,6 +455,7 @@
       : letters[0];
     $('poll-hint').textContent = 'type ' + hint + ' in chat';
     $('poll-footer').classList.remove('final');
+    $('poll-first').classList.add('hidden');
 
     renderPoll();
     show('poll');
@@ -461,7 +489,7 @@
       var pct = total ? Math.round(poll.counts[i] / total * 100) : 0;
       $('poll-fill-' + i).style.width = pct + '%';
       $('poll-pct-' + i).textContent = pct + '%';
-      var leading = total > 0 && poll.counts[i] === max;
+      var leading = !poll.ended && total > 0 && poll.counts[i] === max;
       $('poll-row-' + i).classList.toggle('leading', leading);
     });
     $('poll-count').textContent = total;
@@ -472,6 +500,26 @@
     poll.ended = true;
     $('poll-hint').textContent = 'final result';
     $('poll-footer').classList.add('final');
+  }
+
+  function revealPoll(cmd) {
+    endPoll();
+    var idx = cmd.correctIndex;
+    if (typeof idx !== 'number' || idx < 0 || idx >= poll.options.length) return;
+    // gold takes over: drop the green leading highlight so the answer stands alone
+    poll.options.forEach(function (_, i) {
+      var row = $('poll-row-' + i);
+      row.classList.remove('leading');
+      row.classList.toggle('correct', i === idx);
+    });
+    var banner = $('poll-first');
+    if (cmd.firstCorrect && cmd.firstCorrect.name) {
+      banner.innerHTML = 'First correct answer: <b></b>';
+      banner.querySelector('b').textContent = cmd.firstCorrect.name;
+    } else {
+      banner.textContent = 'No one picked the right answer';
+    }
+    banner.classList.remove('hidden');
   }
 
   /* ============================================================
@@ -674,6 +722,7 @@
         switch (cmd.cmd) {
           case 'poll:start':  startPoll(cmd); break;
           case 'poll:end':    endPoll(); break;
+        case 'poll:reveal': revealPoll(cmd); break;
           case 'cloud:start': startCloud(cmd); break;
           case 'cloud:clear': clearCloud(); break;
           case 'wheel:show':  showWheel(cmd); break;

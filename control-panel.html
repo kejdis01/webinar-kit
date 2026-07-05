@@ -15,6 +15,8 @@
     --line: #e3e1db;
     --accent: #1D9E75;
     --accent-ink: #0d5c43;
+    --gold: #E3A93C;
+    --gold-ink: #8a6410;
     --danger: #c0442f;
     --radius: 14px;
     --font: 'Archivo', system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -194,6 +196,20 @@
   .opt-row input { flex: 1; font: inherit; font-size: 15px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); }
   .opt-row input:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent; }
   .opt-row .rm { padding: 8px 10px; }
+  .opt-row .ok-toggle {
+    width: 38px; height: 38px;
+    flex: none;
+    padding: 0;
+    border-radius: 9px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    color: #c9c6bf;
+    font-size: 16px;
+    font-weight: 800;
+  }
+  .opt-row .ok-toggle:hover { border-color: var(--gold); color: var(--gold-ink); background: #faf3e3; }
+  .opt-row.is-correct .ok-toggle { background: var(--gold); border-color: var(--gold); color: #3d2e07; }
+  .opt-row.is-correct input { border-color: var(--gold); }
 
   .actions {
     display: flex;
@@ -372,6 +388,7 @@
     </div>
     <div class="actions">
       <button class="live" id="btn-poll-live">Go live on overlay<kbd>P</kbd></button>
+      <button id="btn-poll-reveal" disabled>Reveal answer<kbd>A</kbd></button>
       <button id="btn-poll-end" disabled>End poll</button>
       <div class="spacer"></div>
       <button class="ghost" id="btn-poll-new">New poll</button>
@@ -418,7 +435,7 @@
   </div>
 
   <footer>
-    Shortcuts: <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> switch tabs · <kbd>P</kbd> poll live · <kbd>W</kbd> cloud live · <kbd>C</kbd> clear cloud · <kbd>S</kbd> spin · <kbd>R</kbd> reset wheel · <kbd>H</kbd> or <kbd>Esc</kbd> hide overlay.<br>
+    Shortcuts: <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> switch tabs · <kbd>P</kbd> poll live · <kbd>A</kbd> reveal answer · <kbd>W</kbd> cloud live · <kbd>C</kbd> clear cloud · <kbd>S</kbd> spin · <kbd>R</kbd> reset wheel · <kbd>H</kbd> or <kbd>Esc</kbd> hide overlay.<br>
     <div id="sd-block">
       Stream Deck (no focus needed): add a <b>Website</b> action, tick <b>"GET request in background"</b>, and use one of these URLs for the current session. Click one to copy it.
       <div id="sd-urls"></div>
@@ -465,7 +482,7 @@
    * State
    * ============================================================ */
   var liveWidget = null; // 'poll' | 'cloud' | 'wheel' | null
-  var poll = { live: false, ended: false, options: [], votes: {}, counts: [] };
+  var poll = { live: false, ended: false, revealed: false, correctIndex: null, firstCorrect: null, options: [], votes: {}, counts: [] };
   var cloud = { live: false, msgCount: 0, counts: {} };
   var wheel = { entries: [], seen: {}, lastWinner: null };
 
@@ -480,6 +497,7 @@
   var SD_ACTIONS = [
     ['poll-live', 'launch the poll'],
     ['poll-end', 'end the poll'],
+    ['poll-reveal', 'reveal the answer'],
     ['cloud-live', 'start the word cloud'],
     ['cloud-clear', 'clear the word cloud'],
     ['spin', 'spin the wheel'],
@@ -572,6 +590,11 @@
             if (typeof prev === 'number') poll.counts[prev]--;
             poll.votes[msg.voterKey] = idx;
             poll.counts[idx]++;
+            // quiz mode: the first person to hit the right answer keeps
+            // first place for good, even if they change their vote later
+            if (poll.correctIndex !== null && idx === poll.correctIndex && !poll.firstCorrect) {
+              poll.firstCorrect = { name: msg.name, key: msg.voterKey };
+            }
             renderTally();
           }
         }
@@ -602,7 +625,12 @@
       if (liveWidget === 'poll' && poll.live) {
         send({ cmd: 'poll:start', question: poll.question, options: poll.options,
                resume: { counts: poll.counts, votes: poll.votes } });
-        if (poll.ended) send({ cmd: 'poll:end' });
+        if (poll.revealed) {
+          send({ cmd: 'poll:reveal', correctIndex: poll.correctIndex,
+                 firstCorrect: poll.firstCorrect ? { name: poll.firstCorrect.name } : null });
+        } else if (poll.ended) {
+          send({ cmd: 'poll:end' });
+        }
       } else if (liveWidget === 'cloud' && cloud.live) {
         send({ cmd: 'cloud:start', resume: { counts: cloud.counts } });
       } else if (liveWidget === 'wheel') {
@@ -623,6 +651,7 @@
       case 'hide':        hideOverlay(); break;
       case 'poll-live':   goLivePoll(); break;
       case 'poll-end':    endPoll(); break;
+      case 'poll-reveal': revealPoll(); break;
       case 'cloud-live':  goLiveCloud(); break;
       case 'cloud-clear': clearCloud(); break;
       case 'wheel-reset': resetWheel(); break;
@@ -677,8 +706,16 @@
     row.innerHTML =
       '<div class="opt-letter"></div>' +
       '<input type="text" maxlength="60" placeholder="Option text">' +
+      '<button class="ok-toggle" title="Mark as the correct answer">✓</button>' +
       '<button class="ghost rm" title="Remove option">✕</button>';
     row.querySelector('input').value = value || '';
+    row.querySelector('.ok-toggle').addEventListener('click', function () {
+      var wasOn = row.classList.contains('is-correct');
+      document.querySelectorAll('#poll-opts .opt-row').forEach(function (r) {
+        r.classList.remove('is-correct');
+      });
+      if (!wasOn) row.classList.add('is-correct'); // clicking again unsets it
+    });
     row.querySelector('.rm').addEventListener('click', function () {
       if (optionInputs().length <= 2) { toast('A poll needs at least 2 options'); return; }
       row.remove();
@@ -686,6 +723,16 @@
     });
     $('poll-opts').appendChild(row);
     relabelOptions();
+  }
+
+  // index of the row marked correct, or null if this poll has no right answer
+  function markedCorrectIndex() {
+    var rows = document.querySelectorAll('#poll-opts .opt-row');
+    var idx = null;
+    rows.forEach(function (row, i) {
+      if (row.classList.contains('is-correct') && row.querySelector('input').value.trim()) idx = i;
+    });
+    return idx;
   }
 
   function relabelOptions() {
@@ -704,9 +751,10 @@
     $('poll-q').value = '';
     $('poll-opts').innerHTML = '';
     addOptionRow(); addOptionRow();
-    poll = { live: false, ended: false, options: [], votes: {}, counts: [] };
+    poll = { live: false, ended: false, revealed: false, correctIndex: null, firstCorrect: null, options: [], votes: {}, counts: [] };
     $('poll-tally').classList.add('hidden');
     $('btn-poll-end').disabled = true;
+    $('btn-poll-reveal').disabled = true;
     if (liveWidget === 'poll') setAir(null);
   });
 
@@ -722,13 +770,17 @@
     poll.counts = opts.map(function () { return 0; });
     poll.live = true;
     poll.ended = false;
+    poll.revealed = false;
+    poll.correctIndex = markedCorrectIndex(); // null if not a quiz
+    poll.firstCorrect = null;
 
     send({ cmd: 'poll:start', question: q, options: opts });
     setAir('poll');
     switchTab('poll');
     $('btn-poll-end').disabled = false;
+    $('btn-poll-reveal').disabled = (poll.correctIndex === null);
     buildTally();
-    toast('Poll is live');
+    toast(poll.correctIndex === null ? 'Poll is live' : 'Quiz is live — answer stays hidden until you reveal it');
   }
   $('btn-poll-live').addEventListener('click', goLivePoll);
 
@@ -740,6 +792,22 @@
     toast('Poll ended — final result frozen on overlay');
   }
   $('btn-poll-end').addEventListener('click', endPoll);
+
+  function revealPoll() {
+    if (!poll.live || poll.revealed) return;
+    if (poll.correctIndex === null) { toast('Mark an option with ✓ before going live to use reveal'); return; }
+    poll.ended = true;
+    poll.revealed = true;
+    send({ cmd: 'poll:reveal', correctIndex: poll.correctIndex,
+           firstCorrect: poll.firstCorrect ? { name: poll.firstCorrect.name } : null });
+    $('btn-poll-end').disabled = true;
+    $('btn-poll-reveal').disabled = true;
+    renderTally();
+    toast(poll.firstCorrect
+      ? 'Answer revealed — first correct: ' + poll.firstCorrect.name
+      : 'Answer revealed — no one picked it');
+  }
+  $('btn-poll-reveal').addEventListener('click', revealPoll);
 
   function buildTally() {
     var box = $('tally-rows');
@@ -762,9 +830,16 @@
     poll.options.forEach(function (_, i) {
       var pct = total ? Math.round(poll.counts[i] / total * 100) : 0;
       $('tf-' + i).style.width = pct + '%';
-      $('tn-' + i).textContent = poll.counts[i] + ' · ' + pct + '%';
+      var mark = (poll.revealed && i === poll.correctIndex) ? ' ✓' : '';
+      $('tn-' + i).textContent = poll.counts[i] + ' · ' + pct + '%' + mark;
     });
-    $('tally-total').textContent = total + (total === 1 ? ' vote' : ' votes');
+    var label = total + (total === 1 ? ' vote' : ' votes');
+    if (poll.revealed) {
+      label += poll.firstCorrect
+        ? ' · first correct: ' + poll.firstCorrect.name
+        : ' · no one picked the answer';
+    }
+    $('tally-total').textContent = label;
   }
 
   /* ============================================================
@@ -894,6 +969,7 @@
       case '2': switchTab('cloud'); break;
       case '3': switchTab('wheel'); break;
       case 'p': goLivePoll(); break;
+      case 'a': revealPoll(); break;
       case 'w': goLiveCloud(); break;
       case 'c': clearCloud(); break;
       case 's': spinWheel(); break;
