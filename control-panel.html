@@ -424,7 +424,7 @@
 
 <div class="wrap" id="main-view">
   <header>
-    <h1>Kejdis <span>CP · v12</span></h1>
+    <h1>Kejdis <span>CP · v13</span></h1>
     <div class="conn">
       <span><span class="dot" id="dot-chat"></span>chat</span>
       <span><span class="dot" id="dot-control"></span>overlay link</span>
@@ -650,13 +650,13 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="ssn-link.js?v=12"></script>
+<script src="ssn-link.js?v=13"></script>
 <script>
 (function () {
   'use strict';
 
   var $ = function (id) { return document.getElementById(id); };
-  var PAGE_VERSION = '12';
+  var PAGE_VERSION = '13';
   var overlayInfo = { seen: false, version: '' };
   var connState = { chat: 'no-session', control: 'no-session' };
 
@@ -714,6 +714,7 @@
     ['poll-reveal', 'reveal the answer'],
     ['cloud-live', 'start the word cloud'],
     ['cloud-clear', 'clear the word cloud'],
+    ['wheel-show', 'show the wheel'],
     ['spin', 'spin the wheel'],
     ['wheel-reset', 'reset the wheel'],
     ['tug-live', 'launch the tug of war'],
@@ -1031,6 +1032,7 @@
 
   function runTrigger(action) {
     switch (action) {
+      case 'wheel-show':  showWheelOnly(); break;
       case 'spin':        spinWheel(); break;
       case 'hide':        hideOverlay(); break;
       case 'poll-live':   goLivePoll(); break;
@@ -1424,13 +1426,15 @@
     if (e.key === 'Enter') addWheelName();
   });
 
-  $('btn-wheel-show').addEventListener('click', function () {
-    if (!wheel.entries.length) { toast('Add at least one name first'); return; }
+  function showWheelOnly() {
+    if (!wheel.entries.length) { toast('Add at least one name first'); switchTab('wheel'); return; }
     send({ cmd: 'wheel:show', entries: wheel.entries, style: getStyle('wheel') });
     setAir('wheel');
     switchTab('wheel');
+    $('wheel-winner-note').classList.add('hidden');
     toast('Wheel is on the overlay');
-  });
+  }
+  $('btn-wheel-show').addEventListener('click', showWheelOnly);
 
   function spinWheel() {
     if (wheel.entries.length < 2) { toast('Need at least 2 entries to spin'); switchTab('wheel'); return; }

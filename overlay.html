@@ -256,12 +256,6 @@
     text-shadow: 0 1px 8px rgba(0,0,0,0.55);
   }
   .cloud-word.vert { writing-mode: vertical-rl; }
-  .cloud-empty {
-    font-size: 20px;
-    color: var(--text-dim);
-    font-weight: 500;
-  }
-
   /* ---------- Wheel (slides in from the right, half off-screen) ---------- */
   #wheel-card {
     position: fixed;
@@ -556,10 +550,7 @@
   <!-- Word cloud -->
   <div id="cloud-card" class="band hidden">
    <div class="strip">
-    <div class="cloud-title">Live from the chat</div>
-    <div class="cloud-words" id="cloud-words">
-      <div class="cloud-empty">Waiting for the first messages…</div>
-    </div>
+    <div class="cloud-words" id="cloud-words"></div>
    </div>
   </div>
 
@@ -654,14 +645,14 @@
   </div>
 </div>
 
-<script src="ssn-link.js?v=12"></script>
+<script src="ssn-link.js?v=13"></script>
 <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
 <script>
 (function () {
   'use strict';
 
-  console.log('[webinar-kit] overlay v12, ssn-link v' + (window.SSNLink && SSNLink.VERSION));
+  console.log('[webinar-kit] overlay v13, ssn-link v' + (window.SSNLink && SSNLink.VERSION));
 
   var $ = function (id) { return document.getElementById(id); };
 
@@ -902,7 +893,7 @@
     }).sort(function (a, b) { return b[1] - a[1]; }).slice(0, 50);
 
     if (!entries.length) {
-      box.innerHTML = '<div class="cloud-empty">Waiting for the first messages\u2026</div>';
+      box.innerHTML = '';
       return;
     }
 

@@ -39,11 +39,11 @@ Two ways, use whichever fits your setup:
 | R | Reset wheel |
 | H or Esc | Hide overlay |
 
-**Website actions, HTTP method (recommended)**: works even when the panel isn't focused, and needs no extra page. In the control panel footer there's a list of ready-made URLs for your current session. Click any one to copy it, then in the Stream Deck app add a **Website** action, paste the URL, and tick **"GET request in background"**. Do that for each command you want (poll-live, poll-end, cloud-live, cloud-clear, spin, wheel-reset, hide).
+**Website actions, HTTP method (recommended)**: works even when the panel isn't focused, and needs no extra page. In the control panel footer there's a list of ready-made URLs for your current session. Click any one to copy it, then in the Stream Deck app add a **Website** action, paste the URL, and tick **"GET request in background"**. Do that for each command you want (poll-live, poll-end, cloud-live, cloud-clear, wheel-show, spin, wheel-reset, hide).
 
 These are plain SSN API calls of the form `https://io.socialstream.ninja/SESSION/trigger/null/ACTION?channel=6`. The relay drops the message on channel 6, where your panel picks it up and runs it. The panel (browser tab or OBS dock) has to be open, since it holds all the state (your poll question, wheel names, tallies). Because the URLs are generated from whatever session is set, they're automatically correct on each machine.
 
-**Website actions, page method**: pointing a "Website" action at `control-panel.html?cmd=spin` also works. It opens a small trigger page that relays the command over channel 6 and closes itself. Same supported commands.
+**Website actions, page method**: pointing a "Website" action at `control-panel.html?cmd=wheel-show` or `control-panel.html?cmd=spin` also works. It opens a small trigger page that relays the command over channel 6 and closes itself. Same supported commands.
 
 ## Behavior notes
 
@@ -108,6 +108,6 @@ Word cloud redesigned: words pack around the center horizontally and vertically 
 Every widget tab now has an Appearance section: position (bottom/middle/top for the band widgets, left/right for wheel and bullets), size (scales the whole widget including fonts), accent color, and background darkness where it applies. Settings are saved per widget in the browser, ride along with every go-live, and apply instantly if the widget is already on screen. Other v8 changes: the meter always shows the full 1 to 10 arc with much bigger text, tug of war sits mid-screen full width by default with a 48px bar, the wheel lost its background box, bullets run full height with larger type, the map is full screen, and the feedback wall rotates through its colors card by card. If map pins ever stop appearing, the overlay now says so on screen instead of failing silently (it means ssn-link.js is outdated on the server).
 
 
-## v12
+## v13
 
 Quality-of-life release for live operation: the panel now has Copy OBS URL, Preflight, setup export/import, local draft restore, and a demo chat injector for testing widgets without SSN chat. The map overlay has stronger land outlines plus Appearance controls for map opacity and pin color. The header/version status shows control, shared link, and overlay version so stale browser caches are easier to spot.
