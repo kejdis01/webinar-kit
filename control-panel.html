@@ -424,7 +424,7 @@
 
 <div class="wrap" id="main-view">
   <header>
-    <h1>Kejdis <span>CP · v13</span></h1>
+    <h1>Kejdis <span>CP · v14</span></h1>
     <div class="conn">
       <span><span class="dot" id="dot-chat"></span>chat</span>
       <span><span class="dot" id="dot-control"></span>overlay link</span>
@@ -650,7 +650,7 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="ssn-link.js?v=13"></script>
+<script src="ssn-link.js?v=14"></script>
 <script>
 (function () {
   'use strict';
@@ -904,7 +904,7 @@
       if (mm) {
         meter.values[msg.voterKey] = parseInt(mm[1], 10);
         renderMeterStatus();
-        send({ cmd: 'meter:update', style: getStyle('meter'), values: Object.assign({}, meter.values) });
+        sendMeterUpdate();
       }
     }
     // map location mirror, one place per person
@@ -1504,7 +1504,8 @@
     if (!q) { toast('Type a question first'); switchTab('meter'); return; }
     stopAllLive();
     meter = { live: true, question: q, values: {} };
-    send({ cmd: 'meter:start', question: q, style: getStyle('meter') });
+    send({ cmd: 'meter:start', question: q, style: getStyle('meter'), resume: { values: meter.values } });
+    sendMeterUpdate();
     setAir('meter');
     switchTab('meter');
     renderMeterStatus();
@@ -1512,13 +1513,23 @@
   }
   $('btn-meter-live').addEventListener('click', goLiveMeter);
 
-  function renderMeterStatus() {
-    if (!meter.live) { $('meter-status').textContent = ''; return; }
+
+  function meterSummary() {
     var keys = Object.keys(meter.values);
-    if (!keys.length) { $('meter-status').textContent = 'no ratings yet'; return; }
     var sum = 0;
     keys.forEach(function (k) { sum += meter.values[k]; });
-    $('meter-status').textContent = 'average ' + (Math.round(sum / keys.length * 10) / 10).toFixed(1) + ' from ' + keys.length;
+    return { count: keys.length, avg: keys.length ? sum / keys.length : null };
+  }
+
+  function sendMeterUpdate() {
+    send({ cmd: 'meter:update', style: getStyle('meter'), values: Object.assign({}, meter.values), summary: meterSummary() });
+  }
+
+  function renderMeterStatus() {
+    if (!meter.live) { $('meter-status').textContent = ''; return; }
+    var summary = meterSummary();
+    if (!summary.count) { $('meter-status').textContent = 'no ratings yet'; return; }
+    $('meter-status').textContent = 'average ' + (Math.round(summary.avg * 10) / 10).toFixed(1) + ' from ' + summary.count + (summary.count === 1 ? ' vote' : ' votes');
   }
 
   /* ============================================================

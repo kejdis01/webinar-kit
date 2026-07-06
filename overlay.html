@@ -645,14 +645,14 @@
   </div>
 </div>
 
-<script src="ssn-link.js?v=13"></script>
+<script src="ssn-link.js?v=14"></script>
 <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
 <script>
 (function () {
   'use strict';
 
-  console.log('[webinar-kit] overlay v13, ssn-link v' + (window.SSNLink && SSNLink.VERSION));
+  console.log('[webinar-kit] overlay v14, ssn-link v' + (window.SSNLink && SSNLink.VERSION));
 
   var $ = function (id) { return document.getElementById(id); };
 
@@ -1232,6 +1232,7 @@
   function updateMeter(cmd) {
     applyStyle(cards.meter, cmd.style);
     meter.values = Object.assign({}, cmd.values || (cmd.resume && cmd.resume.values) || {});
+    if (!document.getElementById('meter-needle')) drawMeter();
     if (active !== 'meter') show('meter');
     renderMeter();
   }
@@ -1249,7 +1250,7 @@
     keys.forEach(function (k) { sum += meter.values[k]; });
     var avg = sum / keys.length;
     $('meter-avg').textContent = (Math.round(avg * 10) / 10).toFixed(1);
-    $('meter-sub').textContent = keys.length + (keys.length === 1 ? ' rating' : ' ratings');
+    $('meter-sub').textContent = 'average of ' + keys.length + (keys.length === 1 ? ' vote' : ' votes');
     if (needle) needle.style.transform = 'rotate(' + (-90 + (avg - 1) / 9 * 180) + 'deg)';
   }
 
@@ -1772,7 +1773,7 @@
     if (!msg) return;
     handleVote(msg);
     feedCloud(msg);
-    handleMeter(msg);
+    // Meter is panel-authoritative; demo injection also sends meter:update from the panel.
     handleTug(msg);
     feedMap(msg);
     handleDonut(msg);
@@ -1815,7 +1816,7 @@
       onMessage: function (msg) {
         handleVote(msg);
         feedCloud(msg);
-        handleMeter(msg);
+        // Meter is panel-authoritative: the panel sends meter:update with the full current vote set.
         handleTug(msg);
         feedMap(msg);
         handleDonut(msg);
@@ -1826,7 +1827,7 @@
     // Ask the control panel to resend the current widget. Covers the
     // "refreshed the browser source mid-webinar" case: the panel answers
     // with the active widget config, including the poll tally it has.
-    setTimeout(function () { control.send({ cmd: 'overlay:hello', version: SSNLink.VERSION || '11' }); }, 800);
+    setTimeout(function () { control.send({ cmd: 'overlay:hello', version: SSNLink.VERSION || '14' }); }, 800);
   }
 
   // First-run setup: if no session is saved on this machine, show a
