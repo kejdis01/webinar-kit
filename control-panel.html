@@ -85,6 +85,8 @@
     background: var(--panel);
   }
   .session-bar button { font-size: 12.5px; padding: 7px 12px; }
+  .session-tools { display: flex; gap: 6px; flex-wrap: wrap; margin: -4px 0 14px; }
+  .session-tools button { font-size: 12px; padding: 7px 10px; }
 
   .chat-send {
     display: flex;
@@ -377,6 +379,18 @@
   .sd-url b { color: var(--accent-ink); }
   .sd-url.copied { background: rgba(29,158,117,0.15); border-color: var(--accent); }
   .sd-hint { font-size: 12px; color: var(--ink-soft); }
+  .status-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 14px; }
+  .status-pill { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: 999px; padding: 5px 9px; background: #111419; color: var(--ink-soft); font-size: 12px; font-weight: 700; }
+  .status-pill.ok { color: var(--accent-ink); border-color: rgba(29,158,117,0.45); }
+  .status-pill.warn { color: var(--gold-ink); border-color: rgba(227,169,60,0.5); }
+  .tool-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; }
+  .tool-grid button { width: 100%; }
+  .demo-row { display: grid; grid-template-columns: minmax(90px, 0.35fr) 1fr auto; gap: 8px; margin-top: 12px; }
+  .demo-row input { min-width: 0; }
+  .preflight-list { margin-top: 12px; display: grid; gap: 6px; }
+  .preflight-list div { border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; font-size: 12.5px; color: var(--ink-soft); background: #15181d; }
+  .preflight-list .ok { color: var(--accent-ink); }
+  .preflight-list .warn { color: var(--gold-ink); }
 
   .toast {
     position: fixed;
@@ -410,7 +424,7 @@
 
 <div class="wrap" id="main-view">
   <header>
-    <h1>Kejdis <span>CP · v10</span></h1>
+    <h1>Kejdis <span>CP · v11</span></h1>
     <div class="conn">
       <span><span class="dot" id="dot-chat"></span>chat</span>
       <span><span class="dot" id="dot-control"></span>overlay link</span>
@@ -422,6 +436,14 @@
     <input id="session-input" type="text" placeholder="SSN session ID" spellcheck="false" autocomplete="off" title="Your Social Stream Ninja session ID">
     <button class="primary" id="btn-session">Connect</button>
   </div>
+  <div class="session-tools">
+    <button id="btn-copy-obs">Copy OBS URL</button>
+    <button id="btn-preflight">Preflight</button>
+    <button id="btn-export">Export setup</button>
+    <button id="btn-import">Import setup</button>
+    <input id="import-file" type="file" accept="application/json,.json" class="hidden">
+  </div>
+  <div class="status-row" id="version-status"></div>
 
   <div class="tabs" role="tablist">
     <button id="tab-poll" class="active" role="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="18" y1="20" x2="18" y2="14"/></svg><span class="tab-label">Poll</span><span class="on-air hidden" id="air-poll"></span></button>
@@ -596,11 +618,17 @@
   </div>
 
   <details class="fold">
-    <summary>Chat</summary>
+    <summary>Chat &amp; demo</summary>
     <div class="chat-send">
       <input id="chat-msg-input" type="text" placeholder="Send a message to everyone in the meeting chat" maxlength="300" autocomplete="off">
       <button class="primary" id="btn-chat-send">Send</button>
     </div>
+    <div class="demo-row">
+      <input id="demo-name" type="text" placeholder="Name" maxlength="40" value="Demo Guest">
+      <input id="demo-msg" type="text" placeholder="Demo chat message, e.g. A or Tirana" maxlength="180">
+      <button id="btn-demo-chat">Inject</button>
+    </div>
+    <div class="preflight-list hidden" id="preflight-list"></div>
   </details>
 
   <details class="fold" id="help-fold">
@@ -618,12 +646,15 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="ssn-link.js?v=10"></script>
+<script src="ssn-link.js?v=11"></script>
 <script>
 (function () {
   'use strict';
 
   var $ = function (id) { return document.getElementById(id); };
+  var PAGE_VERSION = '11';
+  var overlayInfo = { seen: false, version: '' };
+  var connState = { chat: 'no-session', control: 'no-session' };
 
   /* ============================================================
    * Trigger mode: Stream Deck opens control-panel.html?cmd=spin,
@@ -653,7 +684,7 @@
   /* ============================================================
    * State
    * ============================================================ */
-  var liveWidget = null; // 'poll' | 'cloud' | 'wheel' | null
+  var liveWidget = null; // current visible overlay widget
   var poll = { live: false, ended: false, revealed: false, correctIndex: null, firstCorrect: null, options: [], votes: {}, counts: [] };
   var cloud = { live: false, msgCount: 0, counts: {} };
   var wheel = { entries: [], seen: {}, lastWinner: null, images: {} };
@@ -692,6 +723,32 @@
     ['chatfall-live', 'launch the feedback wall'],
     ['hide', 'hide the overlay']
   ];
+  function panelBaseUrl(file) {
+    var base = location.href.split('#')[0].split('?')[0];
+    return base.replace(/control-panel\.html$/, file);
+  }
+  function buildObsUrl() {
+    var url = panelBaseUrl('overlay.html');
+    if (SSNLink.session) url += '#session=' + encodeURIComponent(SSNLink.session);
+    return url;
+  }
+  function copyText(text, label) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { toast(label + ' copied'); });
+    } else {
+      window.prompt(label, text);
+    }
+  }
+  function updateVersionStatus() {
+    var box = $('version-status');
+    if (!box) return;
+    var linkVersion = (window.SSNLink && SSNLink.VERSION) || '?';
+    var linked = String(linkVersion) === PAGE_VERSION;
+    var overlayOk = overlayInfo.seen && (!overlayInfo.version || String(overlayInfo.version) === linkVersion);
+    box.innerHTML =
+      '<span class="status-pill ' + (linked ? 'ok' : 'warn') + '">Control v' + PAGE_VERSION + ' / link v' + linkVersion + '</span>' +
+      '<span class="status-pill ' + (overlayOk ? 'ok' : 'warn') + '">Overlay ' + (overlayInfo.seen ? ('v' + (overlayInfo.version || '?')) : 'waiting') + '</span>';
+  }
   function renderSdUrls() {
     var box = $('sd-urls');
     box.innerHTML = '';
@@ -714,10 +771,14 @@
     });
   }
   renderSdUrls();
+  updateVersionStatus();
 
   function setDot(id, state) {
     var el = $(id);
     el.className = 'dot' + (state === 'connected' ? ' ok' : state === 'no-session' ? '' : ' bad');
+    if (id === 'dot-chat') connState.chat = state;
+    if (id === 'dot-control') connState.control = state;
+    updateVersionStatus();
   }
 
   var chatConn = null;
@@ -738,6 +799,7 @@
 
   $('btn-session').addEventListener('click', function () {
     SSNLink.setSession($('session-input').value);
+    saveDraft();
     renderSdUrls();
     connect();
     toast('Connecting to session "' + SSNLink.session + '"');
@@ -745,6 +807,29 @@
   $('session-input').addEventListener('keydown', function (e) {
     if (e.key === 'Enter') $('btn-session').click();
   });
+
+  $('btn-copy-obs').addEventListener('click', function () {
+    if (!SSNLink.session) { toast('Set the session ID first'); return; }
+    copyText(buildObsUrl(), 'OBS URL');
+  });
+  function runPreflight() {
+    var rows = [
+      [!!SSNLink.session, 'Session ID is set'],
+      [connState.chat === 'connected', 'Chat relay connected'],
+      [connState.control === 'connected', 'Overlay command relay connected'],
+      [overlayInfo.seen, 'Overlay has checked in'],
+      [String(SSNLink.VERSION) === PAGE_VERSION, 'Control and ssn-link versions match'],
+      [!!(SSNLink.matchLocation && SSNLink.GEO), 'Map location data loaded']
+    ];
+    var box = $('preflight-list');
+    box.closest('details').open = true;
+    box.classList.remove('hidden');
+    box.innerHTML = rows.map(function (r) {
+      return '<div class="' + (r[0] ? 'ok' : 'warn') + '">' + (r[0] ? 'OK: ' : 'Check: ') + r[1] + '</div>';
+    }).join('');
+    toast(rows.every(function (r) { return r[0]; }) ? 'Preflight passed' : 'Preflight needs attention');
+  }
+  $('btn-preflight').addEventListener('click', runPreflight);
 
   function send(obj) {
     if (!control) { toast('Set the session ID first'); return false; }
@@ -879,6 +964,9 @@
    * ============================================================ */
   function onControl(cmd) {
     if (cmd.cmd === 'overlay:hello') {
+      overlayInfo.seen = true;
+      overlayInfo.version = cmd.version || '';
+      updateVersionStatus();
       resendWidget(); // an overlay just (re)loaded
       return;
     }
@@ -979,9 +1067,12 @@
     map: null, donut: null, chatfall: null
   };
   var BG_CAPABLE = { poll: 1, tug: 1, meter: 1, cloud: 1, bullets: 1, map: 1 };
+  var MAP_EXTRA_DEFAULTS = { mapOpacity: 0.18, pinColor: '#36D399' };
 
   function styleDefaults(t) {
-    return { pos: POS_OPTIONS[t] ? POS_OPTIONS[t][0] : null, scale: 1, accent: '#1D9E75', bg: 0.92 };
+    var base = { pos: POS_OPTIONS[t] ? POS_OPTIONS[t][0] : null, scale: 1, accent: '#1D9E75', bg: 0.92 };
+    if (t === 'map') { base.mapOpacity = MAP_EXTRA_DEFAULTS.mapOpacity; base.pinColor = MAP_EXTRA_DEFAULTS.pinColor; }
+    return base;
   }
   function getStyle(t) {
     var d = styleDefaults(t);
@@ -1008,11 +1099,15 @@
     var bgHtml = BG_CAPABLE[t]
       ? '<label>Background <input type="range" data-k="bg" min="20" max="100" value="' + Math.round(st.bg * 100) + '"> <b class="app-val" data-v="bg">' + Math.round(st.bg * 100) + '%</b></label>'
       : '';
+    var mapHtml = t === 'map'
+      ? '<label>Map opacity <input type="range" data-k="mapOpacity" min="5" max="80" value="' + Math.round(st.mapOpacity * 100) + '"> <b class="app-val" data-v="mapOpacity">' + Math.round(st.mapOpacity * 100) + '%</b></label>' +
+        '<label>Pin color <input type="color" data-k="pinColor" value="' + st.pinColor + '"></label>'
+      : '';
     box.innerHTML = '<summary>Appearance</summary><div class="app-grid">' +
       posHtml +
       '<label>Size <input type="range" data-k="scale" min="60" max="160" value="' + Math.round(st.scale * 100) + '"> <b class="app-val" data-v="scale">' + Math.round(st.scale * 100) + '%</b></label>' +
       '<label>Accent <input type="color" data-k="accent" value="' + st.accent + '"></label>' +
-      bgHtml +
+      bgHtml + mapHtml +
       '<button class="ghost app-reset">Reset</button></div>';
 
     function refresh() {
@@ -1020,7 +1115,7 @@
       box.querySelectorAll('[data-k]').forEach(function (inp) {
         var k = inp.dataset.k;
         if (k === 'pos') inp.value = cur.pos;
-        else if (k === 'accent') inp.value = cur.accent;
+        else if (k === 'accent' || k === 'pinColor') inp.value = cur[k];
         else inp.value = Math.round(cur[k] * 100);
       });
       box.querySelectorAll('.app-val').forEach(function (v) {
@@ -1032,7 +1127,7 @@
       if (!k) return;
       var cur = getStyle(t);
       if (k === 'pos') cur.pos = e.target.value;
-      else if (k === 'accent') cur.accent = e.target.value;
+      else if (k === 'accent' || k === 'pinColor') cur[k] = e.target.value;
       else cur[k] = parseInt(e.target.value, 10) / 100;
       saveStyle(t, cur);
       refresh();
@@ -1289,6 +1384,7 @@
     box.innerHTML = '';
     if (!wheel.entries.length) {
       box.innerHTML = '<span class="chips-empty">No entries yet. Chatters are added automatically, or add names below.</span>';
+      if (typeof saveDraft === 'function') saveDraft();
       return;
     }
     wheel.entries.forEach(function (name, i) {
@@ -1307,6 +1403,7 @@
       chip.appendChild(rm);
       box.appendChild(chip);
     });
+    if (typeof saveDraft === 'function') saveDraft();
   }
 
   function addWheelName() {
@@ -1551,6 +1648,95 @@
     toast('Feedback wall is live');
   }
   $('btn-chatfall-live').addEventListener('click', goLiveChatfall);
+
+
+  /* ============================================================
+   * Local setup backup, import/export, and demo chat
+   * ============================================================ */
+  var DRAFT_KEY = 'webinar-kit-setup-v1';
+  function collectSetup() {
+    var styles = {};
+    TABS.forEach(function (t) { styles[t] = getStyle(t); });
+    return {
+      version: PAGE_VERSION,
+      session: SSNLink.session || '',
+      fields: {
+        pollQ: $('poll-q').value, pollOptions: optionInputs().map(function (i) { return i.value; }), pollCorrect: markedCorrectIndex(),
+        tugQ: $('tug-q').value, tugA: $('tug-a').value, tugB: $('tug-b').value,
+        meterQ: $('meter-q').value,
+        bulletsTitle: $('bul-title-in').value, bulletsItems: $('bul-items-in').value,
+        donutQ: $('donut-q').value, donutOptions: donutInputs().map(function (i) { return i.value; }),
+        chatfallTitle: $('chatfall-q').value,
+        wheelEntries: wheel.entries.slice(), wheelAuto: $('wheel-auto').checked,
+        demoName: $('demo-name').value
+      },
+      styles: styles
+    };
+  }
+  function applySetup(data) {
+    if (!data || !data.fields) return;
+    if (data.session) { SSNLink.setSession(data.session); $('session-input').value = data.session; renderSdUrls(); }
+    var f = data.fields;
+    $('poll-q').value = f.pollQ || '';
+    $('poll-opts').innerHTML = '';
+    (f.pollOptions && f.pollOptions.length ? f.pollOptions : ['', '']).slice(0, 6).forEach(function (v) { addOptionRow(v); });
+    document.querySelectorAll('#poll-opts .opt-row').forEach(function (row, i) { row.classList.toggle('is-correct', i === f.pollCorrect); });
+    $('tug-q').value = f.tugQ || ''; $('tug-a').value = f.tugA || ''; $('tug-b').value = f.tugB || '';
+    $('meter-q').value = f.meterQ || '';
+    $('bul-title-in').value = f.bulletsTitle || ''; $('bul-items-in').value = f.bulletsItems || '';
+    $('donut-q').value = f.donutQ || '';
+    $('donut-opts').innerHTML = '';
+    (f.donutOptions && f.donutOptions.length ? f.donutOptions : ['Yes', 'No']).slice(0, 6).forEach(function (v) { addDonutRow(v); });
+    $('chatfall-q').value = f.chatfallTitle || '';
+    $('wheel-auto').checked = f.wheelAuto !== false;
+    wheel.entries = (f.wheelEntries || []).slice(0, 80); wheel.seen = {}; renderChips();
+    $('demo-name').value = f.demoName || 'Demo Guest';
+    if (data.styles) {
+      TABS.forEach(function (t) {
+        if (data.styles[t]) localStorage.setItem('kitstyle_' + t, JSON.stringify(data.styles[t]));
+      });
+    }
+  }
+  function saveDraft() {
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify(collectSetup())); } catch (e) {}
+  }
+  function loadDraft() {
+    try { applySetup(JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null')); } catch (e) {}
+  }
+  function exportSetup() {
+    var blob = new Blob([JSON.stringify(collectSetup(), null, 2)], { type: 'application/json' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'webinar-kit-setup-v' + PAGE_VERSION + '.json';
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+  }
+  $('btn-export').addEventListener('click', exportSetup);
+  $('btn-import').addEventListener('click', function () { $('import-file').click(); });
+  $('import-file').addEventListener('change', function () {
+    var file = this.files && this.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () { applySetup(JSON.parse(String(reader.result || '{}'))); saveDraft(); toast('Setup imported'); };
+    reader.readAsText(file);
+    this.value = '';
+  });
+  document.addEventListener('input', saveDraft);
+  document.addEventListener('change', saveDraft);
+  loadDraft();
+
+  function injectDemoChat() {
+    var msg = $('demo-msg').value.trim();
+    if (!msg) return;
+    var name = $('demo-name').value.trim() || 'Demo Guest';
+    var fake = { name: name, message: msg, userid: 'demo:' + name, voterKey: 'demo:' + name, raw: {} };
+    onChat(fake);
+    send({ cmd: 'demo:chat', msg: fake });
+    $('demo-msg').value = '';
+    saveDraft();
+  }
+  $('btn-demo-chat').addEventListener('click', injectDemoChat);
+  $('demo-msg').addEventListener('keydown', function (e) { if (e.key === 'Enter') injectDemoChat(); });
 
   /* ============================================================
    * Keyboard shortcuts (Stream Deck Hotkey actions land here)
