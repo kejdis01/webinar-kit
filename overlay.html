@@ -449,6 +449,81 @@
   .cf-ava img { width: 100%; height: 100%; object-fit: cover; }
   .cf-name { font-size: 13.5px; font-weight: 700; opacity: 0.75; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
+  /* ---------- Engagement top bar + leaderboard ---------- */
+  .eng-topbar {
+    position: fixed;
+    top: 22px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(720px, calc(100vw - 48px));
+    background: rgba(12, 14, 18, 0.86);
+    border: 1px solid rgba(255,255,255,0.16);
+    border-radius: 18px;
+    padding: 12px 16px 14px;
+    box-shadow: 0 16px 44px rgba(0,0,0,0.32);
+    backdrop-filter: blur(10px);
+    z-index: 40;
+    pointer-events: none;
+    animation: card-in 0.35s ease-out both;
+  }
+  .eng-top-row { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 18px; }
+  .eng-brand { font-size: clamp(15px, 1.5vw, 21px); font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: #DDEBFF; white-space: nowrap; }
+  .eng-stat { text-align: right; min-width: 118px; }
+  .eng-stat b { display: block; font-size: clamp(20px, 2.2vw, 32px); font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1; }
+  .eng-stat span { display: block; margin-top: 4px; color: var(--text-dim); font-size: clamp(10px, 0.9vw, 12px); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; }
+  .eng-track { height: 10px; border-radius: 999px; background: rgba(255,255,255,0.16); margin-top: 11px; overflow: hidden; }
+  .eng-fill { height: 100%; width: 0%; border-radius: 999px; background: linear-gradient(90deg, #36D399, #E8B33F); transition: width 0.45s ease; }
+
+  #engagement-card {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8vh 6vw;
+    background: radial-gradient(circle at 18% 18%, rgba(255, 188, 74, 0.18), transparent 30%), radial-gradient(circle at 78% 22%, rgba(69, 148, 255, 0.16), transparent 34%), rgba(8, 10, 16, 0.46);
+    animation: band-in 0.45s cubic-bezier(0.2, 0.9, 0.25, 1) both;
+  }
+  #engagement-card.leaving { animation: band-out 0.35s ease-in both; }
+  .eng-board {
+    width: min(1120px, 94vw);
+    background: linear-gradient(180deg, rgba(18, 23, 34, 0.96), rgba(12, 16, 25, 0.94));
+    border: 1px solid rgba(91,155,217,0.46);
+    border-radius: 18px;
+    padding: 30px 34px 28px;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.56), inset 0 0 34px rgba(91,155,217,0.08);
+  }
+  .eng-board-head { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 24px; }
+  .eng-title-wrap { display: flex; align-items: center; gap: 16px; min-width: 0; }
+  .eng-mark { width: 54px; height: 54px; flex: none; color: #FFB43E; filter: drop-shadow(0 0 18px rgba(255,180,62,0.38)); }
+  .eng-board-title { font-size: clamp(34px, 4.4vw, 58px); font-weight: 800; color: #FFFFFF; letter-spacing: 0.03em; text-transform: uppercase; line-height: 0.95; }
+  .eng-board-sub { color: rgba(255,255,255,0.7); font-size: clamp(14px, 1.35vw, 18px); font-weight: 700; margin-top: 7px; }
+  .eng-board-meta { text-align: right; color: rgba(255,255,255,0.64); font-weight: 700; min-width: 190px; }
+  .eng-board-meta b { display: block; color: #5BA1FF; font-size: clamp(17px, 1.7vw, 24px); font-weight: 800; }
+  .eng-board-meta span { display: block; margin-top: 2px; font-size: clamp(12px, 1vw, 15px); }
+  .eng-leaders { display: grid; gap: 12px; }
+  .eng-leader {
+    display: grid;
+    grid-template-columns: 58px 68px 1fr auto;
+    align-items: center;
+    gap: 16px;
+    background: rgba(29, 36, 50, 0.88);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    padding: 14px 18px;
+    box-shadow: inset 4px 0 0 rgba(91,161,255,0.95);
+  }
+  .eng-leader.top-1 { box-shadow: inset 4px 0 0 #FFB43E; }
+  .eng-rank { font-size: 24px; font-weight: 800; color: #5BA1FF; text-align: center; }
+  .eng-leader.top-1 .eng-rank, .eng-leader.top-1 .eng-score { color: #FFB43E; }
+  .eng-avatar { width: 58px; height: 58px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.34); overflow: hidden; background: rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 800; }
+  .eng-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .eng-name { min-width: 0; font-size: clamp(22px, 2.2vw, 32px); font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .eng-metrics { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 8px; }
+  .eng-metrics span { color: rgba(255,255,255,0.68); font-size: clamp(11px, 1vw, 14px); font-weight: 700; white-space: nowrap; }
+  .eng-score { color: #5BA1FF; font-size: clamp(24px, 2.8vw, 40px); font-weight: 800; font-variant-numeric: tabular-nums; text-align: right; padding-left: 24px; border-left: 1px solid rgba(255,255,255,0.1); }
+  .eng-score span { color: inherit; font-size: 0.48em; font-weight: 700; margin-left: 4px; }
+
   /* ---------- Connection pill (only shows when something is down) ---------- */
   #confetti {
     position: fixed;
@@ -629,6 +704,34 @@
   <div class="donut-pill" id="donut-pill"></div>
 </div>
 
+<div id="eng-topbar" class="eng-topbar hidden">
+  <div class="eng-top-row">
+    <div class="eng-brand">Engagement</div>
+    <div class="eng-stat"><b id="eng-participation">0%</b><span>participation</span></div>
+    <div class="eng-stat"><b id="eng-listening">0%</b><span>listening</span></div>
+  </div>
+  <div class="eng-track"><div class="eng-fill" id="eng-fill"></div></div>
+</div>
+
+<div id="engagement-card" class="hidden">
+  <div class="eng-board">
+    <div class="eng-board-head">
+      <div class="eng-title-wrap">
+        <svg class="eng-mark" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.7 2.2c.3 2.7-.6 4.4-1.8 5.8-.9 1.1-1.8 2.1-1.6 3.7.1.7.5 1.4 1.1 1.9-.1-1.7.8-2.8 1.8-3.9.9-1 1.9-2.1 2.1-3.8 2.2 1.8 3.7 4.4 3.7 7.4 0 4.9-3.9 8.7-8.7 8.7S1.8 18.3 1.8 13.4c0-3.9 2.2-6.4 4.3-8.6.2 2.1.9 3.4 2 4.3-.1-2.8 1.4-5.4 5.6-6.9z"/></svg>
+        <div>
+          <div class="eng-board-title">MOST ENGAGED</div>
+          <div class="eng-board-sub">"Encourage one another." 1 Thessalonians 5:11</div>
+        </div>
+      </div>
+      <div class="eng-board-meta">
+        <b id="eng-board-active">0 active</b>
+        <span id="eng-board-total">of 0 meeting participants</span>
+      </div>
+    </div>
+    <div class="eng-leaders" id="eng-leaders"></div>
+  </div>
+</div>
+
 <canvas id="confetti"></canvas>
 
 <div id="conn-pill" class="hidden">reconnecting</div>
@@ -670,11 +773,12 @@
   var mapw = { counts: {}, users: {} };
   var donut = { question: '', options: [], counts: [], votes: {} };
   var cf = { cols: [], colW: 0, gap: 14, topSafe: 90, total: 0 };
+  var engagement = { total: 0, active: 0, participation: 0, listening: 0, visible: false, top: [] };
 
   /* ============================================================
    * Widget switching
    * ============================================================ */
-  var cards = { poll: $('poll-card'), cloud: $('cloud-card'), wheel: $('wheel-card'), meter: $('meter-card'), tug: $('tug-card'), bullets: $('bullets-card'), map: $('map-card'), donut: $('donut-card'), chatfall: $('chatfall-card') };
+  var cards = { poll: $('poll-card'), cloud: $('cloud-card'), wheel: $('wheel-card'), meter: $('meter-card'), tug: $('tug-card'), bullets: $('bullets-card'), map: $('map-card'), donut: $('donut-card'), chatfall: $('chatfall-card'), engagement: $('engagement-card') };
 
   /* Appearance settings sent by the panel with each go-live:
    * { pos, scale, accent, bg }. Missing fields fall back to defaults. */
@@ -1646,6 +1750,62 @@
     }
   }
 
+  function updateEngagement(cmd) {
+    engagement = Object.assign(engagement, (cmd && cmd.data) || {});
+    $('eng-topbar').classList.toggle('hidden', !engagement.visible);
+    $('eng-participation').textContent = (engagement.participation || 0) + '%';
+    $('eng-listening').textContent = (engagement.total ? engagement.listening : 0) + '%';
+    $('eng-fill').style.width = (engagement.participation || 0) + '%';
+  }
+
+  function showEngagementLeaderboard(cmd) {
+    updateEngagement(cmd);
+    var data = (cmd && cmd.data) || engagement;
+    var top = (data.top || []).slice(0, 3);
+    $('eng-board-active').textContent = (data.active || 0) + ' active';
+    $('eng-board-total').textContent = 'of ' + (data.total || 0) + ' meeting participants';
+    var list = $('eng-leaders');
+    list.innerHTML = '';
+    top.forEach(function (p, i) {
+      var row = document.createElement('div');
+      row.className = 'eng-leader top-' + (i + 1);
+      var rank = document.createElement('div');
+      rank.className = 'eng-rank';
+      rank.textContent = i === 0 ? '1' : i === 1 ? '2' : '3';
+      var avatar = document.createElement('div');
+      avatar.className = 'eng-avatar';
+      fillAvatar(avatar, p.name, p.img);
+      var main = document.createElement('div');
+      var name = document.createElement('div');
+      name.className = 'eng-name';
+      name.textContent = p.name || 'anonymous';
+      var metrics = document.createElement('div');
+      metrics.className = 'eng-metrics';
+      [
+        (p.messages || 0) + ' messages',
+        (p.reactions || 0) + ' reactions',
+        (p.votes || 0) + ' votes',
+        (p.feedback || 0) + ' feedback',
+        (p.locations || 0) + ' locations'
+      ].forEach(function (label) {
+        var chip = document.createElement('span');
+        chip.textContent = label;
+        metrics.appendChild(chip);
+      });
+      main.appendChild(name);
+      main.appendChild(metrics);
+      var score = document.createElement('div');
+      score.className = 'eng-score';
+      score.innerHTML = (p.score || 0) + '<span>pts</span>';
+      row.appendChild(rank);
+      row.appendChild(avatar);
+      row.appendChild(main);
+      row.appendChild(score);
+      list.appendChild(row);
+    });
+    show('engagement');
+  }
+
   /* ============================================================
    * Falling chat wall: messages drop from the top and stack up
    * from the bottom; when a column is full, its oldest cards
@@ -1805,6 +1965,8 @@
         case 'demo:chat':     handleDemoChat(cmd.msg); break;
         case 'donut:start':   startDonut(cmd); break;
         case 'chatfall:start': startChatfall(cmd); break;
+        case 'engagement:update': updateEngagement(cmd); break;
+        case 'engagement:leaderboard': showEngagementLeaderboard(cmd); break;
         case 'hide':        hideAll(); break;
           // 'trigger' and 'overlay:hello' are panel-side; ignore here
         }

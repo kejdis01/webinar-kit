@@ -222,7 +222,17 @@
     border-radius: 10px;
     background: var(--bg);
   }
+  .field input[type=number] {
+    width: 100%;
+    font: inherit;
+    font-size: 15px;
+    padding: 10px 13px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--bg);
+  }
   .field input[type=text]:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent; }
+  .field input[type=number]:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent; }
 
   .opt-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
   .opt-letter {
@@ -338,6 +348,23 @@
     font-size: 15px;
     font-weight: 600;
   }
+
+  .eng-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin: 16px 0; }
+  .eng-card {
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 13px 14px;
+  }
+  .eng-card b { display: block; font-size: 24px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .eng-card span { display: block; margin-top: 2px; color: var(--ink-soft); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+  .eng-progress { height: 10px; border-radius: 999px; background: var(--bg); overflow: hidden; border: 1px solid var(--line); }
+  .eng-progress-fill { height: 100%; width: 0%; border-radius: 999px; background: linear-gradient(90deg, var(--accent), var(--gold)); transition: width 0.35s ease; }
+  .eng-list { margin-top: 16px; display: grid; gap: 8px; }
+  .eng-person { display: grid; grid-template-columns: 28px 1fr auto; gap: 10px; align-items: center; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 9px 11px; }
+  .eng-person .rank { color: var(--gold-ink); font-weight: 800; }
+  .eng-person .name { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 700; }
+  .eng-person .score { color: var(--ink-soft); font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
 
   footer {
     margin-top: 22px;
@@ -461,6 +488,7 @@
     <button id="tab-map" role="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><span class="tab-label">Map</span><span class="on-air hidden" id="air-map"></span></button>
     <button id="tab-donut" role="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><line x1="12" y1="3" x2="12" y2="8.5"/></svg><span class="tab-label">Donut</span><span class="on-air hidden" id="air-donut"></span></button>
     <button id="tab-chatfall" role="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-8 8H4l2-3a8 8 0 1 1 15-5z"/><line x1="12" y1="2" x2="12" y2="5" stroke-dasharray="1 2"/></svg><span class="tab-label">Feedback</span><span class="on-air hidden" id="air-chatfall"></span></button>
+    <button id="tab-engagement" role="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M6 16v-5"/><path d="M12 16V6"/><path d="M18 16V9"/><path d="M8 5l4-3 4 3"/></svg><span class="tab-label">Engage</span><span class="on-air hidden" id="air-engagement"></span></button>
   </div>
 
   <!-- ============ POLL ============ -->
@@ -623,6 +651,31 @@
     </div>
   </div>
 
+  <!-- ============ ENGAGEMENT ============ -->
+  <div class="panel hidden" id="panel-engagement">
+    <div class="field">
+      <label for="eng-total">Total videocall meeting participants</label>
+      <input type="number" id="eng-total" min="0" step="1" placeholder="e.g. 42">
+    </div>
+    <div class="toggle-row">
+      <input type="checkbox" id="eng-topbar">
+      <label for="eng-topbar">Show always-on participation bar</label>
+    </div>
+    <div class="eng-grid">
+      <div class="eng-card"><b id="eng-active">0</b><span>active people</span></div>
+      <div class="eng-card"><b id="eng-participation">0%</b><span>participation</span></div>
+      <div class="eng-card"><b id="eng-listening">0%</b><span>listening</span></div>
+    </div>
+    <div class="eng-progress"><div class="eng-progress-fill" id="eng-progress"></div></div>
+    <div class="eng-list" id="eng-top-list"></div>
+    <div class="actions">
+      <button class="live" id="btn-eng-leaderboard">Show top 3 leaderboard</button>
+      <button id="btn-eng-refresh">Refresh top bar</button>
+      <div class="spacer"></div>
+      <button class="danger-ghost" id="btn-eng-reset">Reset engagement</button>
+    </div>
+  </div>
+
   <details class="fold">
     <summary>Chat &amp; demo</summary>
     <div class="chat-send">
@@ -713,6 +766,7 @@
   var mapw = { live: false, counts: {}, users: {} };
   var donut = { live: false, question: '', options: [], counts: [], votes: {} };
   var chatfall = { live: false, title: '', count: 0, recent: [] };
+  var engagement = { total: 0, topbar: false, people: {} };
   // location matching lives in ssn-link.js (SSNLink.matchLocation)
 
   var control = null;
@@ -741,6 +795,7 @@
     ['map-live', 'launch the world map'],
     ['donut-live', 'launch the donut poll'],
     ['chatfall-live', 'launch the feedback wall'],
+    ['engagement-leaderboard', 'show engagement top 3'],
     ['hide', 'hide the overlay']
   ];
   function panelBaseUrl(file) {
@@ -858,6 +913,111 @@
     return true;
   }
 
+  function isReactionMessage(text) {
+    var s = String(text || '').trim();
+    return !!s && s.length <= 12 && !/[A-Za-z0-9]/.test(s);
+  }
+
+  function engagementPerson(msg) {
+    var key = String((msg && msg.voterKey) || (msg && msg.userid) || (msg && msg.name) || 'anonymous');
+    var p = engagement.people[key];
+    if (!p) {
+      p = engagement.people[key] = {
+        key: key,
+        name: (msg && msg.name) || 'anonymous',
+        img: null,
+        score: 0,
+        messages: 0,
+        reactions: 0,
+        votes: 0,
+        feedback: 0,
+        locations: 0,
+        lastSeen: 0
+      };
+    }
+    if (msg && msg.name) p.name = msg.name;
+    if (msg && msg.raw && (msg.raw.chatimg || msg.raw.chatimage)) p.img = msg.raw.chatimg || msg.raw.chatimage;
+    return p;
+  }
+
+  function addEngagement(msg, kind, points) {
+    var p = engagementPerson(msg);
+    p.score += points || 1;
+    p.lastSeen = Date.now();
+    if (kind === 'reaction') p.reactions++;
+    else if (kind === 'message') p.messages++;
+    else if (kind === 'feedback') p.feedback++;
+    else if (kind === 'location') p.locations++;
+    else p.votes++;
+    renderEngagementPanel();
+    sendEngagementUpdate();
+  }
+
+  function engagementTop() {
+    return Object.keys(engagement.people).map(function (k) {
+      var p = engagement.people[k];
+      return {
+        name: p.name,
+        img: p.img,
+        score: p.score,
+        messages: p.messages,
+        reactions: p.reactions,
+        votes: p.votes,
+        feedback: p.feedback,
+        locations: p.locations,
+        lastSeen: p.lastSeen
+      };
+    }).sort(function (a, b) {
+      return (b.score - a.score) || (b.lastSeen - a.lastSeen) || a.name.localeCompare(b.name);
+    });
+  }
+
+  function escapeHtml(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, function (ch) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch];
+    });
+  }
+
+  function engagementSnapshot() {
+    var active = Object.keys(engagement.people).length;
+    var total = Math.max(0, parseInt($('eng-total').value || engagement.total || 0, 10) || 0);
+    var pct = total ? Math.min(100, Math.round(active / total * 100)) : 0;
+    return {
+      total: total,
+      active: active,
+      participation: pct,
+      listening: total ? Math.max(0, 100 - pct) : 0,
+      visible: $('eng-topbar') && $('eng-topbar').checked,
+      top: engagementTop().slice(0, 3)
+    };
+  }
+
+  function sendEngagementUpdate() {
+    if (!control) return false;
+    return control.send({ cmd: 'engagement:update', data: engagementSnapshot() });
+  }
+
+  function renderEngagementPanel() {
+    var s = engagementSnapshot();
+    $('eng-active').textContent = s.active;
+    $('eng-participation').textContent = s.participation + '%';
+    $('eng-listening').textContent = s.total ? (s.listening + '%') : '-';
+    $('eng-progress').style.width = s.participation + '%';
+    var top = engagementTop().slice(0, 5);
+    $('eng-top-list').innerHTML = top.length ? top.map(function (p, i) {
+      return '<div class="eng-person"><span class="rank">#' + (i + 1) + '</span><span class="name">' + escapeHtml(p.name) + '</span><span class="score">' + p.score + ' pts</span></div>';
+    }).join('') : '<span class="sd-hint">No visible activity collected yet.</span>';
+  }
+
+  function showEngagementLeaderboard() {
+    var data = engagementSnapshot();
+    if (!data.top.length) { toast('No engagement activity yet'); return; }
+    send({ cmd: 'engagement:leaderboard', data: data });
+    setAir('engagement');
+    switchTab('engagement');
+    toast('Engagement top 3 is live');
+  }
+
   /* ============================================================
    * Incoming chat (channel 4) — feeds poll tally, cloud counters,
    * and the wheel roster
@@ -867,6 +1027,7 @@
     if (msg.name && msg.raw && (msg.raw.chatimg || msg.raw.chatimage)) {
       wheel.images[msg.name] = msg.raw.chatimg || msg.raw.chatimage;
     }
+    addEngagement(msg, isReactionMessage(msg.message) ? 'reaction' : 'message', 1);
     if ($('wheel-auto').checked && msg.name && !wheel.seen[msg.voterKey]) {
       wheel.seen[msg.voterKey] = true;
       if (wheel.entries.indexOf(msg.name) === -1) {
@@ -892,6 +1053,7 @@
               poll.firstCorrect = { name: msg.name, key: msg.voterKey,
                 img: (msg.raw && (msg.raw.chatimg || msg.raw.chatimage)) || null };
             }
+            addEngagement(msg, 'vote', 3);
             renderTally();
           }
         }
@@ -908,6 +1070,7 @@
             if (typeof tprev === 'number') tug.counts[tprev]--;
             tug.votes[msg.voterKey] = ti;
             tug.counts[ti]++;
+            addEngagement(msg, 'vote', 3);
             renderTugStatus();
           }
         }
@@ -917,7 +1080,10 @@
     if (meter.live) {
       var mm = msg.message.trim().match(/^(10|[1-9])\b/);
       if (mm) {
-        meter.values[msg.voterKey] = parseInt(mm[1], 10);
+        var mv = parseInt(mm[1], 10);
+        var mprev = meter.values[msg.voterKey];
+        meter.values[msg.voterKey] = mv;
+        if (mprev !== mv) addEngagement(msg, 'vote', 2);
         renderMeterStatus();
         sendMeterUpdate();
       }
@@ -935,6 +1101,7 @@
           }
           mapw.users[msg.voterKey] = lkey;
           mapw.counts[lkey] = (mapw.counts[lkey] || 0) + 1;
+          addEngagement(msg, 'location', 2);
           renderMapStatus();
           send({ cmd: 'map:update', style: getStyle('map'), counts: mapw.counts, users: mapw.users });
         }
@@ -947,6 +1114,7 @@
         img: (msg.raw && (msg.raw.chatimg || msg.raw.chatimage)) || null });
       if (chatfall.recent.length > 24) chatfall.recent.shift();
       $('chatfall-status').textContent = chatfall.count + (chatfall.count === 1 ? ' message' : ' messages');
+      addEngagement(msg, 'feedback', 2);
     }
     // donut votes mirror
     if (donut.live) {
@@ -959,6 +1127,7 @@
             if (typeof dprev === 'number') donut.counts[dprev]--;
             donut.votes[msg.voterKey] = di;
             donut.counts[di]++;
+            addEngagement(msg, 'vote', 3);
             renderDonutStatus();
           }
         }
@@ -989,6 +1158,7 @@
       overlayInfo.version = cmd.version || '';
       updateVersionStatus();
       resendWidget(); // an overlay just (re)loaded
+      sendEngagementUpdate();
       return;
     }
     if (cmd.cmd === 'wheel:result') {
@@ -1065,6 +1235,7 @@
       case 'map-live':     goLiveMap(); break;
       case 'donut-live':   goLiveDonut(); break;
       case 'chatfall-live': goLiveChatfall(); break;
+      case 'engagement-leaderboard': showEngagementLeaderboard(); break;
       default: toast('Unknown trigger: ' + action);
     }
   }
@@ -1072,7 +1243,7 @@
   /* ============================================================
    * Tabs
    * ============================================================ */
-  var TABS = ['poll', 'tug', 'meter', 'cloud', 'wheel', 'bullets', 'map', 'donut', 'chatfall'];
+  var TABS = ['poll', 'tug', 'meter', 'cloud', 'wheel', 'bullets', 'map', 'donut', 'chatfall', 'engagement'];
 
   /* ============================================================
    * Appearance settings: position, size, accent, background.
@@ -1684,6 +1855,38 @@
   }
   $('btn-chatfall-live').addEventListener('click', goLiveChatfall);
 
+  /* ============================================================
+   * Engagement
+   * ============================================================ */
+  function resetEngagement() {
+    engagement.people = {};
+    renderEngagementPanel();
+    sendEngagementUpdate();
+    toast('Engagement reset');
+  }
+
+  $('eng-total').addEventListener('input', function () {
+    engagement.total = Math.max(0, parseInt($('eng-total').value || 0, 10) || 0);
+    renderEngagementPanel();
+    sendEngagementUpdate();
+    saveDraft();
+  });
+  $('eng-topbar').addEventListener('change', function () {
+    engagement.topbar = $('eng-topbar').checked;
+    renderEngagementPanel();
+    sendEngagementUpdate();
+    $('air-engagement').classList.toggle('hidden', !engagement.topbar);
+    toast(engagement.topbar ? 'Participation bar is on' : 'Participation bar is hidden');
+    saveDraft();
+  });
+  $('btn-eng-refresh').addEventListener('click', function () {
+    renderEngagementPanel();
+    sendEngagementUpdate();
+    toast('Engagement top bar refreshed');
+  });
+  $('btn-eng-leaderboard').addEventListener('click', showEngagementLeaderboard);
+  $('btn-eng-reset').addEventListener('click', resetEngagement);
+  renderEngagementPanel();
 
   /* ============================================================
    * Local setup backup, import/export, and demo chat
@@ -1703,6 +1906,7 @@
         donutQ: $('donut-q').value, donutOptions: donutInputs().map(function (i) { return i.value; }),
         chatfallTitle: $('chatfall-q').value,
         wheelEntries: wheel.entries.slice(), wheelAuto: $('wheel-auto').checked,
+        engagementTotal: $('eng-total').value, engagementTopbar: $('eng-topbar').checked,
         demoName: $('demo-name').value
       },
       styles: styles
@@ -1724,6 +1928,12 @@
     (f.donutOptions && f.donutOptions.length ? f.donutOptions : ['Yes', 'No']).slice(0, 6).forEach(function (v) { addDonutRow(v); });
     $('chatfall-q').value = f.chatfallTitle || '';
     $('wheel-auto').checked = f.wheelAuto !== false;
+    $('eng-total').value = f.engagementTotal || '';
+    $('eng-topbar').checked = !!f.engagementTopbar;
+    engagement.total = Math.max(0, parseInt($('eng-total').value || 0, 10) || 0);
+    engagement.topbar = $('eng-topbar').checked;
+    renderEngagementPanel();
+    sendEngagementUpdate();
     wheel.entries = (f.wheelEntries || []).slice(0, 80); wheel.seen = {}; renderChips();
     $('demo-name').value = f.demoName || 'Demo Guest';
     if (data.styles) {
