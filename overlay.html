@@ -200,30 +200,21 @@
     margin-bottom: 20px;
   }
   .cloud-words {
-    flex: 1;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: center;
-    align-content: center;
-    gap: 6px 18px;
-    min-height: 26vh;
-    max-width: 1400px;
+    position: relative;
+    height: 34vh;
+    max-width: 1500px;
     margin: 0 auto;
+    overflow: hidden;
   }
   .cloud-word {
-    font-weight: 700;
-    line-height: 1.1;
-    color: #ffffff;
+    position: absolute;
+    font-weight: 800;
+    line-height: 1;
+    white-space: nowrap;
     animation: word-in 0.4s ease-out both;
-    transition: font-size 0.5s ease, color 0.5s ease, opacity 0.5s ease;
+    text-shadow: 0 1px 8px rgba(0,0,0,0.55);
   }
-  .cloud-word.r1 { color: var(--accent); font-weight: 800; }
-  .cloud-word.r2 { color: #6fcfae; }
-  @keyframes word-in {
-    from { opacity: 0; transform: scale(0.6); }
-    to   { opacity: 1; transform: scale(1); }
-  }
+  .cloud-word.vert { writing-mode: vertical-rl; }
   .cloud-empty {
     font-size: 20px;
     color: var(--text-dim);
@@ -340,6 +331,48 @@
   .map-pin { animation: pin-in 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) both; }
   @keyframes pin-in { from { opacity: 0; transform: scale(0); } to { opacity: 1; transform: scale(1); } }
   .map-footer { margin-top: 14px; font-size: 14px; color: var(--text-dim); font-weight: 500; text-align: center; }
+
+  /* ---------- Falling chat wall ---------- */
+  #chatfall-card { position: fixed; inset: 0; overflow: hidden; }
+  .cf-title {
+    position: absolute;
+    top: 22px; left: 50%;
+    transform: translateX(-50%);
+    max-width: 86vw;
+    background: var(--card);
+    border-radius: 999px;
+    padding: 12px 26px;
+    font-size: clamp(17px, 1.8vw, 26px);
+    font-weight: 800;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    box-shadow: 0 8px 26px rgba(0,0,0,0.45);
+    z-index: 3;
+  }
+  .cf-card {
+    position: absolute;
+    border-radius: 14px;
+    padding: 16px 18px 14px;
+    color: #17181c;
+    box-shadow: 0 7px 0 rgba(0,0,0,0.28), 0 14px 30px rgba(0,0,0,0.3);
+    transition: top 0.95s cubic-bezier(0.4, 0.02, 0.85, 0.6);
+    will-change: top;
+  }
+  .cf-card.settle { transition: top 0.4s ease-out; }
+  .cf-card.evict { transition: opacity 0.3s ease-in, top 0.3s ease-in; opacity: 0; }
+  .cf-msg { font-size: 17px; font-weight: 600; line-height: 1.35; word-wrap: break-word; }
+  .cf-who { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+  .cf-ava {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: rgba(0,0,0,0.35);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 800;
+    flex: none;
+  }
+  .cf-ava img { width: 100%; height: 100%; object-fit: cover; }
+  .cf-name { font-size: 13.5px; font-weight: 700; opacity: 0.75; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
   /* ---------- Connection pill (only shows when something is down) ---------- */
   #confetti {
@@ -505,6 +538,11 @@
   </div>
 </div>
 
+<!-- Falling chat wall -->
+<div id="chatfall-card" class="hidden">
+  <div class="cf-title" id="cf-title"></div>
+</div>
+
 <!-- Donut poll (translucent ring over the whole scene) -->
 <div id="donut-card" class="hidden">
   <svg id="donut-svg" viewBox="0 0 560 560"></svg>
@@ -527,12 +565,12 @@
   </div>
 </div>
 
-<script src="ssn-link.js?v=5"></script>
+<script src="ssn-link.js?v=6"></script>
 <script>
 (function () {
   'use strict';
 
-  console.log('[webinar-kit] overlay v5, ssn-link v' + (window.SSNLink && SSNLink.VERSION));
+  console.log('[webinar-kit] overlay v6, ssn-link v' + (window.SSNLink && SSNLink.VERSION));
 
   var $ = function (id) { return document.getElementById(id); };
 
@@ -549,11 +587,12 @@
   var bullets = { title: '', items: [], active: 0 };
   var mapw = { counts: {}, users: {} };
   var donut = { question: '', options: [], counts: [], votes: {} };
+  var cf = { cols: [], colW: 0, gap: 14, topSafe: 90, total: 0 };
 
   /* ============================================================
    * Widget switching
    * ============================================================ */
-  var cards = { poll: $('poll-card'), cloud: $('cloud-card'), wheel: $('wheel-card'), meter: $('meter-card'), tug: $('tug-card'), bullets: $('bullets-card'), map: $('map-card'), donut: $('donut-card') };
+  var cards = { poll: $('poll-card'), cloud: $('cloud-card'), wheel: $('wheel-card'), meter: $('meter-card'), tug: $('tug-card'), bullets: $('bullets-card'), map: $('map-card'), donut: $('donut-card'), chatfall: $('chatfall-card') };
 
   function show(widget) {
     for (var k in cards) cards[k].classList.toggle('hidden', k !== widget);
@@ -733,38 +772,84 @@
     }
   }, 600);
 
+  var CLOUD_COLORS = ['#F0D860','#A8D860','#E86A9E','#3AA9A9','#6F9BE0','#B07FB0','#E8845A','#48C078','#8FD4F0','#E2574C'];
+
+  function wordHash(w) {
+    var h = 0;
+    for (var i = 0; i < w.length; i++) h = ((h << 5) - h + w.charCodeAt(i)) | 0;
+    return Math.abs(h);
+  }
+
   function renderCloud() {
     var box = $('cloud-words');
     var entries = Object.keys(cloud.counts).map(function (w) {
       return [w, cloud.counts[w]];
-    }).sort(function (a, b) { return b[1] - a[1]; }).slice(0, 60);
+    }).sort(function (a, b) { return b[1] - a[1]; }).slice(0, 50);
 
     if (!entries.length) {
-      box.innerHTML = '<div class="cloud-empty">Waiting for the first messages…</div>';
+      box.innerHTML = '<div class="cloud-empty">Waiting for the first messages\u2026</div>';
       return;
     }
 
+    var W = box.clientWidth || 1200, H = box.clientHeight || 340;
     var maxN = entries[0][1];
-    var rankOf = {};
-    entries.forEach(function (e, i) { rankOf[e[0]] = i; });
-
-    // stable-ish placement: interleave big words toward the middle
-    var ordered = [];
-    entries.forEach(function (e, i) {
-      if (i % 2 === 0) ordered.push(e); else ordered.unshift(e);
-    });
-
     box.innerHTML = '';
-    ordered.forEach(function (e) {
-      var rank = rankOf[e[0]];
+    var placed = [];
+
+    // shrink typography to fit the actual box, so small docks still pack well
+    var sizeF = Math.max(0.55, Math.min(1, H / 360, W / 1300));
+
+    function collides(x, y, w, h) {
+      if (x < 2 || y < 2 || x + w > W - 2 || y + h > H - 2) return true;
+      for (var k = 0; k < placed.length; k++) {
+        var q = placed[k];
+        if (x < q.x + q.w + 4 && x + w + 4 > q.x && y < q.y + q.h + 4 && y + h + 4 > q.y) return true;
+      }
+      return false;
+    }
+
+    entries.forEach(function (e) {
+      var word = e[0], hash = wordHash(word);
+      var vertical = (hash % 100) < 32;
+      var scale = Math.pow(e[1] / maxN, 0.8);
       var el = document.createElement('span');
-      el.className = 'cloud-word' + (rank === 0 ? ' r1' : rank <= 2 ? ' r2' : '');
-      // steeper curve + wider range so the leader visibly dominates
-      var scale = Math.pow(e[1] / maxN, 0.8); // 0..1
-      el.style.fontSize = Math.round(13 + scale * 49) + 'px';
-      el.style.opacity = (0.45 + 0.55 * scale).toFixed(2);
-      el.textContent = e[0];
+      el.className = 'cloud-word' + (vertical ? ' vert' : '');
+      el.style.fontSize = Math.round((15 + scale * 47) * sizeF) + 'px';
+      el.style.color = CLOUD_COLORS[hash % CLOUD_COLORS.length];
+      el.style.opacity = (0.55 + 0.45 * scale).toFixed(2);
+      el.style.visibility = 'hidden';
+      el.textContent = word;
       box.appendChild(el);
+
+      // a vertical word taller than the box flips back to horizontal
+      if (vertical && el.offsetHeight > H * 0.92) {
+        el.classList.remove('vert');
+      }
+      var w = el.offsetWidth, h = el.offsetHeight;
+      var cx = W / 2, cy = H / 2, spot = null;
+      var t0 = (hash % 628) / 100; // stable starting angle per word
+
+      // spiral out from the center first
+      for (var t = 0; t < 80 && !spot; t += 0.3) {
+        var r = 5 + t * 7;
+        var x = cx + r * Math.cos(t + t0) * 1.8 - w / 2;
+        var y = cy + r * Math.sin(t + t0) - h / 2;
+        if (!collides(x, y, w, h)) spot = { x: x, y: y, w: w, h: h };
+      }
+      // then sweep seeded pseudo-random positions across the whole box
+      var seed = hash;
+      for (var n2 = 0; n2 < 220 && !spot; n2++) {
+        seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+        var rx = 2 + (seed % 1000) / 1000 * (W - w - 4);
+        seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+        var ry = 2 + (seed % 1000) / 1000 * (H - h - 4);
+        if (!collides(rx, ry, w, h)) spot = { x: rx, y: ry, w: w, h: h };
+      }
+      if (!spot) { box.removeChild(el); return; } // genuinely no room left
+      el.style.left = spot.x.toFixed(0) + 'px';
+      el.style.top = spot.y.toFixed(0) + 'px';
+      el.style.visibility = 'visible';
+      placed.push(spot);
     });
   }
 
@@ -1346,6 +1431,111 @@
   }
 
   /* ============================================================
+   * Falling chat wall: messages drop from the top and stack up
+   * from the bottom; when a column is full, its oldest cards
+   * vanish and the stack slides down to make room
+   * ============================================================ */
+  var CF_COLORS = ['#E2574C', '#F3D13C', '#6F9BE0', '#9BA84A', '#4F9E6B', '#C46FB4', '#E8935A', '#5BBBB0'];
+
+  function startChatfall(cmd) {
+    var layer = $('chatfall-card');
+    layer.querySelectorAll('.cf-card').forEach(function (el) { el.remove(); });
+    $('cf-title').textContent = cmd.title || 'What does the chat say?';
+    var W = layer.clientWidth || innerWidth;
+    var nCols = Math.max(2, Math.min(5, Math.floor(W / 360)));
+    cf.gap = 16;
+    cf.colW = Math.floor((W - cf.gap * (nCols + 1)) / nCols);
+    cf.cols = [];
+    cf.total = 0;
+    cf.topSafe = 96;
+    for (var i = 0; i < nCols; i++) {
+      cf.cols.push({ x: cf.gap + i * (cf.colW + cf.gap), filled: 0, cards: [] });
+    }
+    show('chatfall');
+    // resync after an OBS refresh: replay the panel's recent messages
+    if (cmd.resume && Array.isArray(cmd.resume.messages)) {
+      cmd.resume.messages.forEach(function (m, i) {
+        setTimeout(function () {
+          if (active === 'chatfall') dropCard(m.name, m.message, m.img);
+        }, i * 140);
+      });
+    }
+  }
+
+  function feedChatfall(msg) {
+    if (active !== 'chatfall' || !msg.message) return;
+    var img = msg.raw && (msg.raw.chatimg || msg.raw.chatimage);
+    dropCard(msg.name, msg.message, img);
+  }
+
+  function dropCard(name, message, img) {
+    var layer = $('chatfall-card');
+    var H = layer.clientHeight || innerHeight;
+
+    var card = document.createElement('div');
+    card.className = 'cf-card';
+    card.style.width = cf.colW + 'px';
+    card.style.background = CF_COLORS[wordHash(String(name)) % CF_COLORS.length];
+    var msgEl = document.createElement('div');
+    msgEl.className = 'cf-msg';
+    msgEl.textContent = String(message).slice(0, 160);
+    var who = document.createElement('div');
+    who.className = 'cf-who';
+    var ava = document.createElement('div');
+    ava.className = 'cf-ava';
+    fillAvatar(ava, name, img);
+    var nm = document.createElement('div');
+    nm.className = 'cf-name';
+    nm.textContent = name;
+    who.appendChild(ava); who.appendChild(nm);
+    card.appendChild(msgEl); card.appendChild(who);
+    card.style.visibility = 'hidden';
+    layer.appendChild(card);
+
+    var cardH = card.offsetHeight;
+    // shortest column catches the card
+    var col = cf.cols[0];
+    cf.cols.forEach(function (c) { if (c.filled < col.filled) col = c; });
+
+    // evict from the bottom until this card fits under the title strip
+    while (col.cards.length && (H - col.filled - cardH - 12) < cf.topSafe) {
+      var oldest = col.cards.shift(); // bottom-most card
+      var freed = oldest.h + 12;
+      col.filled -= freed;
+      cf.total--;
+      oldest.el.classList.add('evict');
+      oldest.el.style.top = (parseFloat(oldest.el.style.top) + 40) + 'px';
+      (function (el) { setTimeout(function () { el.remove(); }, 350); })(oldest.el);
+      // slide the survivors down into the freed space
+      col.cards.forEach(function (c) {
+        c.top += freed;
+        c.el.classList.add('settle');
+        c.el.style.top = c.top + 'px';
+      });
+    }
+    var landing = H - col.filled - cardH - 12;
+
+    card.style.left = col.x + 'px';
+    card.style.top = -(cardH + 60) + 'px';
+    card.style.transform = 'rotate(' + ((wordHash(String(message)) % 5) - 2) * 0.8 + 'deg)';
+    card.style.visibility = 'visible';
+    void card.offsetWidth; // reflow, then let it fall
+    card.style.top = landing + 'px';
+
+    col.cards.push({ el: card, h: cardH, top: landing });
+    col.filled += cardH + 12;
+    cf.total++;
+
+    // global cap as a safety net
+    if (cf.total > 60) {
+      var big = cf.cols[0];
+      cf.cols.forEach(function (c) { if (c.cards.length > big.cards.length) big = c; });
+      var o = big.cards.shift();
+      if (o) { big.filled -= o.h + 12; cf.total--; o.el.remove(); }
+    }
+  }
+
+  /* ============================================================
    * Wiring: relay connections
    * ============================================================ */
   var connState = { chat: 'connecting', control: 'connecting' };
@@ -1383,6 +1573,7 @@
         case 'bullets:show':  showBullets(cmd); break;
         case 'map:start':     startMap(cmd); break;
         case 'donut:start':   startDonut(cmd); break;
+        case 'chatfall:start': startChatfall(cmd); break;
         case 'hide':        hideAll(); break;
           // 'trigger' and 'overlay:hello' are panel-side; ignore here
         }
@@ -1398,6 +1589,7 @@
         handleTug(msg);
         feedMap(msg);
         handleDonut(msg);
+        feedChatfall(msg);
       }
     });
 

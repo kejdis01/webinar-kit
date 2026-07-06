@@ -246,7 +246,7 @@
    * Public API
    * ------------------------------------------------------------ */
   var SSNLink = {
-    VERSION: '5',
+    VERSION: '6',
     session: resolveSession(),
     GEO: { countries: GEO_COUNTRIES, cities: GEO_CITIES },
     matchLocation: matchLocation,

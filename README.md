@@ -62,6 +62,7 @@ These are plain SSN API calls of the form `https://io.socialstream.ninja/SESSION
 - **Meter (speedometer)**: ask a 1 to 10 question, people type a number in chat, the needle points at the live average. One rating per person, changeable.
 - **Bullets**: an on-screen agenda on the right side. Type items one per line, show it, then step through with Next/Back (N and B keys, or Stream Deck). Done items dim, the current one glows.
 - **World map**: ask people to type their city or country in chat. Pins with counts appear on a stylized dark map. Around 130 countries and 185 major cities are recognized in English, plus short forms (USA, UK, UAE, Korea) and accented spellings (Sao Paulo, Turkiye). One pin per person: repeats from the same person don't inflate the count, and if someone corrects themselves their pin moves. If a message names both a city and its country, the city wins. It's chat-based, not automatic geolocation, because Zoom/Meet don't expose location.
+- **Falling chat wall**: every chat message drops from the top as a colored sticky card (name, avatar, message) and stacks from the bottom of the screen. When it fills up, the oldest cards vanish and the stack slides down to make room. Set an optional title, Stream Deck URL is chatfall-live. Survives an OBS refresh by replaying the last 24 messages.
 - **Donut poll**: a big translucent ring over the whole scene with dashed outlines and live percentage labels, like the classic broadcast look. Votes work exactly like the poll (A, B, C in chat), one changeable vote per person.
 
 All five resync after an OBS refresh like the poll does, and all have Stream Deck URLs (tug-live, tug-reveal, meter-live, bullets-live, bullets-next, bullets-prev, map-live, avatars-live). The full clickable list is generated in the control panel footer.
@@ -95,3 +96,8 @@ If you'd rather keep it dead simple, option 1 (store the files, open them locall
 ## v5 layout
 
 Poll, tug of war, meter, word cloud, and map render as a band across the bottom half of the screen with slide-up/slide-down transitions, so the host stays visible above. Polls with 3+ options use a two-column grid. Bullets stay as the vertical list on the right. The wheel slides in from the right edge as a large half-visible disc with the pointer on its left rim. Winners (wheel and quiz first-correct) show a gold trophy, the person's photo when the platform provides one (initials otherwise), and their name; the tug winner gets the trophy and the side's name. The panel header shows the running version (v5) so you can spot stale cached files at a glance.
+
+
+## v6
+
+Word cloud redesigned: words pack around the center horizontally and vertically in ten bright colors (each word keeps its color and orientation between updates), sized by frequency, never overlapping, and it adapts to the space it gets. New falling chat wall widget (9th tab). The control panel tab bar is now an icon dock so all nine tabs fit in a narrow OBS dock, and the meeting-chat box plus help/shortcuts moved into collapsible sections.
