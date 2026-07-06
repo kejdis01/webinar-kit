@@ -424,7 +424,7 @@
 
 <div class="wrap" id="main-view">
   <header>
-    <h1>Kejdis <span>CP · v11</span></h1>
+    <h1>Kejdis <span>CP · v12</span></h1>
     <div class="conn">
       <span><span class="dot" id="dot-chat"></span>chat</span>
       <span><span class="dot" id="dot-control"></span>overlay link</span>
@@ -436,15 +436,6 @@
     <input id="session-input" type="text" placeholder="SSN session ID" spellcheck="false" autocomplete="off" title="Your Social Stream Ninja session ID">
     <button class="primary" id="btn-session">Connect</button>
   </div>
-  <div class="session-tools">
-    <button id="btn-copy-obs">Copy OBS URL</button>
-    <button id="btn-preflight">Preflight</button>
-    <button id="btn-export">Export setup</button>
-    <button id="btn-import">Import setup</button>
-    <input id="import-file" type="file" accept="application/json,.json" class="hidden">
-  </div>
-  <div class="status-row" id="version-status"></div>
-
   <div class="tabs" role="tablist">
     <button id="tab-poll" class="active" role="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="18" y1="20" x2="18" y2="14"/></svg><span class="tab-label">Poll</span><span class="on-air hidden" id="air-poll"></span></button>
     <button id="tab-tug" role="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h7"/><path d="M14 12h7"/><path d="M7 8l-4 4 4 4"/><path d="M17 8l4 4-4 4"/></svg><span class="tab-label">Tug</span><span class="on-air hidden" id="air-tug"></span></button>
@@ -628,6 +619,19 @@
       <input id="demo-msg" type="text" placeholder="Demo chat message, e.g. A or Tirana" maxlength="180">
       <button id="btn-demo-chat">Inject</button>
     </div>
+  </details>
+
+
+  <details class="fold" id="setup-tools-fold">
+    <summary>Setup tools</summary>
+    <div class="session-tools">
+      <button id="btn-copy-obs">Copy OBS URL</button>
+      <button id="btn-preflight">Preflight</button>
+      <button id="btn-export">Export setup</button>
+      <button id="btn-import">Import setup</button>
+      <input id="import-file" type="file" accept="application/json,.json" class="hidden">
+    </div>
+    <div class="status-row" id="version-status"></div>
     <div class="preflight-list hidden" id="preflight-list"></div>
   </details>
 
@@ -646,13 +650,13 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="ssn-link.js?v=11"></script>
+<script src="ssn-link.js?v=12"></script>
 <script>
 (function () {
   'use strict';
 
   var $ = function (id) { return document.getElementById(id); };
-  var PAGE_VERSION = '11';
+  var PAGE_VERSION = '12';
   var overlayInfo = { seen: false, version: '' };
   var connState = { chat: 'no-session', control: 'no-session' };
 
@@ -822,7 +826,7 @@
       [!!(SSNLink.matchLocation && SSNLink.GEO), 'Map location data loaded']
     ];
     var box = $('preflight-list');
-    box.closest('details').open = true;
+    if (box.closest('details')) box.closest('details').open = true;
     box.classList.remove('hidden');
     box.innerHTML = rows.map(function (r) {
       return '<div class="' + (r[0] ? 'ok' : 'warn') + '">' + (r[0] ? 'OK: ' : 'Check: ') + r[1] + '</div>';
@@ -899,6 +903,7 @@
       if (mm) {
         meter.values[msg.voterKey] = parseInt(mm[1], 10);
         renderMeterStatus();
+        send({ cmd: 'meter:update', style: getStyle('meter'), values: Object.assign({}, meter.values) });
       }
     }
     // map location mirror, one place per person

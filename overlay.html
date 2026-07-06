@@ -654,12 +654,14 @@
   </div>
 </div>
 
-<script src="ssn-link.js?v=11"></script>
+<script src="ssn-link.js?v=12"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
 <script>
 (function () {
   'use strict';
 
-  console.log('[webinar-kit] overlay v11, ssn-link v' + (window.SSNLink && SSNLink.VERSION));
+  console.log('[webinar-kit] overlay v12, ssn-link v' + (window.SSNLink && SSNLink.VERSION));
 
   var $ = function (id) { return document.getElementById(id); };
 
@@ -1221,7 +1223,7 @@
   function startMeter(cmd) {
     applyStyle(cards.meter, cmd.style);
     meter.question = cmd.question || 'On a scale of 1 to 10?';
-    meter.values = (cmd.resume && cmd.resume.values) ? cmd.resume.values : {};
+    meter.values = (cmd.resume && cmd.resume.values) ? Object.assign({}, cmd.resume.values) : {};
     $('meter-question').textContent = meter.question;
     drawMeter();
     renderMeter();
@@ -1233,6 +1235,13 @@
     var m = msg.message.trim().match(/^(10|[1-9])\b/);
     if (!m) return;
     meter.values[msg.voterKey] = parseInt(m[1], 10);
+    renderMeter();
+  }
+
+  function updateMeter(cmd) {
+    applyStyle(cards.meter, cmd.style);
+    meter.values = Object.assign({}, cmd.values || (cmd.resume && cmd.resume.values) || {});
+    if (active !== 'meter') show('meter');
     renderMeter();
   }
 
@@ -1344,7 +1353,24 @@
    * ============================================================ */
   // country and city data lives in ssn-link.js (SSNLink.GEO)
 
-  // faint low-poly continents, [lon,lat] outlines, purely decorative
+  var mapProjection = null;
+  var worldCountries = null;
+  var worldMapLoading = false;
+
+  function loadDetailedWorldMap() {
+    if (worldCountries || worldMapLoading || !window.d3 || !window.topojson) return;
+    worldMapLoading = true;
+    fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
+      .then(function (r) { return r.json(); })
+      .then(function (world) {
+        worldCountries = topojson.feature(world, world.objects.countries).features;
+        worldMapLoading = false;
+        if (active === 'map') { drawMapBase(); renderMapPins(); }
+      })
+      .catch(function () { worldMapLoading = false; });
+  }
+
+  // fallback low-poly continents, [lon,lat] outlines, used if detailed map assets fail
   var CONTINENTS = [
     [[-168,66],[-140,70],[-120,72],[-95,72],[-80,73],[-70,62],[-55,52],[-65,45],[-75,40],[-76,35],[-81,31],[-80,26],[-90,29],[-97,26],[-105,22],[-97,16],[-92,15],[-83,9],[-79,8],[-83,14],[-95,18],[-105,24],[-112,28],[-117,33],[-124,40],[-124,48],[-130,55],[-145,60],[-155,58],[-166,62]],
     [[-79,8],[-72,11],[-62,10],[-52,4],[-42,-3],[-35,-8],[-39,-14],[-40,-22],[-48,-26],[-53,-33],[-58,-39],[-65,-47],[-70,-54],[-73,-48],[-72,-40],[-70,-30],[-70,-18],[-76,-10],[-80,-3],[-78,3]],
@@ -1356,36 +1382,63 @@
   ];
 
   function projMap(lat, lon) {
+    if (mapProjection) {
+      var p = mapProjection([lon, lat]);
+      if (p) return p;
+    }
     return [(lon + 180) / 360 * 1000, (90 - lat) / 180 * 500];
   }
 
   function drawMapBase() {
     var svg = $('map-svg');
     svg.innerHTML = '';
-    // graticule
-    for (var lon = -150; lon <= 150; lon += 30) {
-      var l = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      var x = projMap(0, lon)[0];
-      l.setAttribute('x1', x); l.setAttribute('y1', 20); l.setAttribute('x2', x); l.setAttribute('y2', 480);
-      l.setAttribute('stroke', 'rgba(255,255,255,0.12)'); l.setAttribute('stroke-width', '1');
-      svg.appendChild(l);
+    mapProjection = null;
+
+    if (worldCountries && window.d3) {
+      mapProjection = d3.geoNaturalEarth1().fitExtent([[22, 20], [978, 470]], { type: 'Sphere' });
+      var path = d3.geoPath(mapProjection);
+      var sphere = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      sphere.setAttribute('d', path({ type: 'Sphere' }));
+      sphere.setAttribute('fill', 'rgba(255,255,255,0.025)');
+      sphere.setAttribute('stroke', 'rgba(255,255,255,0.18)');
+      sphere.setAttribute('stroke-width', '1.4');
+      svg.appendChild(sphere);
+      worldCountries.forEach(function (feature) {
+        var pg = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        pg.setAttribute('d', path(feature));
+        pg.setAttribute('fill', 'rgba(255,255,255,var(--map-land-a,0.26))');
+        pg.setAttribute('stroke', 'rgba(255,255,255,0.34)');
+        pg.setAttribute('stroke-width', '0.7');
+        pg.setAttribute('vector-effect', 'non-scaling-stroke');
+        svg.appendChild(pg);
+      });
+    } else {
+      loadDetailedWorldMap();
+      for (var lon = -150; lon <= 150; lon += 30) {
+        var l = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        var x = projMap(0, lon)[0];
+        l.setAttribute('x1', x); l.setAttribute('y1', 20); l.setAttribute('x2', x); l.setAttribute('y2', 480);
+        l.setAttribute('stroke', 'rgba(255,255,255,0.12)'); l.setAttribute('stroke-width', '1');
+        svg.appendChild(l);
+      }
+      for (var lat = -60; lat <= 60; lat += 30) {
+        var l2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        var y = projMap(lat, 0)[1];
+        l2.setAttribute('x1', 10); l2.setAttribute('y1', y); l2.setAttribute('x2', 990); l2.setAttribute('y2', y);
+        l2.setAttribute('stroke', 'rgba(255,255,255,0.12)'); l2.setAttribute('stroke-width', '1');
+        svg.appendChild(l2);
+      }
+      CONTINENTS.forEach(function (poly) {
+        var pts = poly.map(function (p) { return projMap(p[1], p[0]).map(function (n) { return n.toFixed(0); }).join(','); }).join(' ');
+        var pg = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+        pg.setAttribute('points', pts);
+        pg.setAttribute('fill', 'rgba(255,255,255,var(--map-land-a,0.26))');
+        pg.setAttribute('stroke', 'rgba(255,255,255,0.26)');
+        pg.setAttribute('stroke-width', '1.2');
+        svg.appendChild(pg);
+      });
     }
-    for (var lat = -60; lat <= 60; lat += 30) {
-      var l2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      var y = projMap(lat, 0)[1];
-      l2.setAttribute('x1', 10); l2.setAttribute('y1', y); l2.setAttribute('x2', 990); l2.setAttribute('y2', y);
-      l2.setAttribute('stroke', 'rgba(255,255,255,0.12)'); l2.setAttribute('stroke-width', '1');
-      svg.appendChild(l2);
-    }
-    CONTINENTS.forEach(function (poly) {
-      var pts = poly.map(function (p) { return projMap(p[1], p[0]).map(function (n) { return n.toFixed(0); }).join(','); }).join(' ');
-      var pg = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-      pg.setAttribute('points', pts);
-      pg.setAttribute('fill', 'rgba(255,255,255,var(--map-land-a,0.18))');
-      pg.setAttribute('stroke', 'rgba(255,255,255,0.18)');
-      pg.setAttribute('stroke-width', '1.2');
-      svg.appendChild(pg);
-    });
+
     var pins = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     pins.setAttribute('id', 'map-pins');
     svg.appendChild(pins);
@@ -1751,6 +1804,7 @@
           case 'wheel:spin':  spinWheel(cmd); break;
           case 'wheel:reset': hideAll(); break;
           case 'meter:start':   startMeter(cmd); break;
+          case 'meter:update':  updateMeter(cmd); break;
         case 'tug:start':     startTug(cmd); break;
         case 'tug:reveal':    revealTug(); break;
         case 'bullets:show':  showBullets(cmd); break;

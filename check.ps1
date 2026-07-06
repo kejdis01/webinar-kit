@@ -1,6 +1,6 @@
 param(
   [string]$BaseUrl = "https://kejdis01.github.io/webinar-kit",
-  [string]$Version = "11"
+  [string]$Version = "12"
 )
 
 $ErrorActionPreference = "Stop"
