@@ -830,6 +830,7 @@
           mapw.users[msg.voterKey] = lkey;
           mapw.counts[lkey] = (mapw.counts[lkey] || 0) + 1;
           renderMapStatus();
+          send({ cmd: 'map:update', counts: mapw.counts, users: mapw.users });
         }
       }
     }

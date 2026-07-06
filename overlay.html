@@ -407,8 +407,8 @@
   #map-card.leaving { animation: band-out 0.4s cubic-bezier(0.55, 0, 0.75, 0.4) both; }
   .map-title { font-size: clamp(20px, 2.4vw, 34px); font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 18px; text-shadow: 0 2px 10px rgba(0,0,0,0.6); }
   #map-svg { height: 66vh; width: auto; max-width: 94vw; display: block; margin: 0 auto; }
-  .map-pin { animation: pin-in 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) both; }
-  @keyframes pin-in { from { opacity: 0; transform: scale(0); } to { opacity: 1; transform: scale(1); } }
+  .map-pin { animation: pin-in 0.5s ease-out both; }
+  @keyframes pin-in { from { opacity: 0; } to { opacity: 1; } }
   .map-footer { margin-top: 14px; font-size: 14px; color: var(--text-dim); font-weight: 500; text-align: center; }
 
   /* ---------- Falling chat wall ---------- */
@@ -1057,8 +1057,8 @@
     var center = (cmd.winnerIndex + 0.5) * seg;
     var jitter = typeof cmd.jitter === 'number' ? cmd.jitter : 0; // -0.35..0.35 of a segment
     // pointer angle: wheel on the right of the screen has its pointer on
-    // its left rim (180deg); wheel on the left has it on its right rim (90deg)
-    var pA = wheel.side === 'left' ? 90 : 180;
+    // its left rim (270deg); wheel on the left has it on its right rim (90deg)
+    var pA = wheel.side === 'left' ? 90 : 270;
     var base = ((pA - center) % 360 + 360) % 360;
     var target = 5 * 360 + base + jitter * seg;
 
@@ -1382,6 +1382,13 @@
     show('map');
   }
 
+  function updateMap(cmd) {
+    if (active !== 'map') return;
+    mapw.counts = (cmd.counts || (cmd.resume && cmd.resume.counts)) || {};
+    mapw.users = (cmd.users || (cmd.resume && cmd.resume.users)) || {};
+    renderMapPins();
+  }
+
   function feedMap(msg) {
     if (active !== 'map') return;
     if (!SSNLink.matchLocation) {
@@ -1696,6 +1703,7 @@
         case 'tug:reveal':    revealTug(); break;
         case 'bullets:show':  showBullets(cmd); break;
         case 'map:start':     startMap(cmd); break;
+        case 'map:update':    updateMap(cmd); break;
         case 'donut:start':   startDonut(cmd); break;
         case 'chatfall:start': startChatfall(cmd); break;
         case 'hide':        hideAll(); break;
