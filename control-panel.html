@@ -30,7 +30,10 @@
     font-family: var(--font);
     color: var(--ink);
     min-height: 100vh;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
+  body::-webkit-scrollbar { display: none; }
 
   .wrap { max-width: 760px; margin: 0 auto; padding: 28px 20px 60px; }
 
