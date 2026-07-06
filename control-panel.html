@@ -410,7 +410,7 @@
 
 <div class="wrap" id="main-view">
   <header>
-    <h1>Kejdis <span>CP · v9</span></h1>
+    <h1>Kejdis <span>CP · v10</span></h1>
     <div class="conn">
       <span><span class="dot" id="dot-chat"></span>chat</span>
       <span><span class="dot" id="dot-control"></span>overlay link</span>
@@ -618,7 +618,7 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="ssn-link.js?v=9"></script>
+<script src="ssn-link.js?v=10"></script>
 <script>
 (function () {
   'use strict';
@@ -830,7 +830,7 @@
           mapw.users[msg.voterKey] = lkey;
           mapw.counts[lkey] = (mapw.counts[lkey] || 0) + 1;
           renderMapStatus();
-          send({ cmd: 'map:update', counts: mapw.counts, users: mapw.users });
+          send({ cmd: 'map:update', style: getStyle('map'), counts: mapw.counts, users: mapw.users });
         }
       }
     }
@@ -880,6 +880,15 @@
   function onControl(cmd) {
     if (cmd.cmd === 'overlay:hello') {
       resendWidget(); // an overlay just (re)loaded
+      return;
+    }
+    if (cmd.cmd === 'wheel:result') {
+      wheel.lastWinner = cmd.winnerName || '';
+      var note = $('wheel-winner-note');
+      if (wheel.lastWinner) {
+        note.classList.remove('hidden');
+        note.textContent = 'Winner: ' + wheel.lastWinner;
+      }
       return;
     }
     if (cmd.cmd === 'trigger') runTrigger(cmd.action);
@@ -1330,13 +1339,10 @@
            winnerImg: wheel.images[wheel.entries[winnerIndex]] || null });
     setAir('wheel');
     switchTab('wheel');
-    wheel.lastWinner = wheel.entries[winnerIndex];
+    wheel.lastWinner = null;
     var note = $('wheel-winner-note');
     note.classList.remove('hidden');
-    note.textContent = 'Spinning… winner will be ' + wheel.lastWinner;
-    setTimeout(function () {
-      if (wheel.lastWinner) note.textContent = '🎉 Winner: ' + wheel.lastWinner;
-    }, 6500);
+    note.textContent = 'Spinning...';
   }
   $('btn-wheel-spin').addEventListener('click', spinWheel);
 
@@ -1459,6 +1465,7 @@
     stopAllLive();
     mapw = { live: true, counts: {}, users: {} };
     send({ cmd: 'map:start', style: getStyle('map') });
+    send({ cmd: 'map:update', style: getStyle('map'), counts: mapw.counts, users: mapw.users });
     setAir('map');
     switchTab('map');
     renderMapStatus();
