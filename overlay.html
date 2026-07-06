@@ -50,17 +50,58 @@
   /* bottom-half band: shared by poll, tug, meter, cloud, map */
   .band {
     position: fixed;
-    left: 0; right: 0; bottom: 0;
-    max-height: 50vh;
-    background: linear-gradient(to top, rgba(12, 14, 18, 0.93) 60%, rgba(12, 14, 18, 0.78));
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    pointer-events: none;
+  }
+  .band.pos-middle { justify-content: center; }
+  .band.pos-top { justify-content: flex-start; }
+  .band .strip {
+    pointer-events: auto;
+    width: 100%;
+    max-height: 62vh;
+    background: linear-gradient(to top, rgba(12, 14, 18, var(--band-a, 0.93)) 60%, rgba(12, 14, 18, calc(var(--band-a, 0.93) * 0.84)));
     padding: 26px 5vw 30px;
     box-shadow: 0 -12px 44px rgba(0, 0, 0, 0.35);
     overflow: hidden;
-    animation: band-in 0.55s cubic-bezier(0.2, 0.9, 0.25, 1) both;
+    zoom: var(--w-zoom, 1);
+    animation: strip-in 0.55s cubic-bezier(0.2, 0.9, 0.25, 1) both;
   }
-  .band.leaving { animation: band-out 0.4s cubic-bezier(0.55, 0, 0.75, 0.4) both; }
+  .band.pos-top .strip { animation-name: strip-in-top; box-shadow: 0 12px 44px rgba(0, 0, 0, 0.35); }
+  .band.leaving .strip { animation: strip-out 0.4s cubic-bezier(0.55, 0, 0.75, 0.4) both; }
+  .band.pos-top.leaving .strip { animation-name: strip-out-top; }
+  @keyframes strip-in      { from { transform: translateY(95vh); } to { transform: translateY(0); } }
+  @keyframes strip-out     { from { transform: translateY(0); } to { transform: translateY(95vh); } }
+  @keyframes strip-in-top  { from { transform: translateY(-95vh); } to { transform: translateY(0); } }
+  @keyframes strip-out-top { from { transform: translateY(0); } to { transform: translateY(-95vh); } }
   @keyframes band-in  { from { transform: translateY(105%); } to { transform: translateY(0); } }
   @keyframes band-out { from { transform: translateY(0); } to { transform: translateY(105%); } }
+
+  /* ---------- Speedometer ---------- */
+  #meter-card .strip { text-align: center; }
+  .meter-question { font-size: clamp(28px, 3.2vw, 46px); font-weight: 800; margin-bottom: 10px; letter-spacing: -0.01em; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+  #meter-svg { height: min(27vh, 290px); width: auto; display: block; margin: 0 auto; }
+  #meter-needle { transform-origin: 200px 200px; transition: transform 0.9s cubic-bezier(0.3, 1.3, 0.4, 1); }
+  .meter-avg { font-size: clamp(44px, 5.4vh, 64px); font-weight: 800; color: var(--accent); margin-top: calc(min(27vh, 290px) * -0.3); font-variant-numeric: tabular-nums; }
+  .meter-sub { color: var(--text-dim); font-size: clamp(15px, 1.8vh, 20px); font-weight: 700; margin-top: 2px; }
+  .meter-footer { margin: 14px auto 0; max-width: 1400px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.12); font-size: 15px; color: var(--text-dim); font-weight: 500; }
+
+  /* ---------- Tug of war ---------- */
+  #tug-card .tug-inner { max-width: 1500px; margin: 0 auto; }
+  .tug-question { font-size: clamp(30px, 3.6vw, 52px); font-weight: 800; text-align: center; margin-bottom: 26px; letter-spacing: -0.01em; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+  .tug-names { display: flex; justify-content: space-between; font-size: clamp(20px, 2vw, 30px); font-weight: 800; margin-bottom: 12px; }
+  .tug-names .tn-a { color: var(--accent); }
+  .tug-names .tn-b { color: #5B9BD9; }
+  .tug-bar { display: flex; height: 48px; border-radius: 24px; overflow: hidden; background: rgba(255,255,255,0.18); }
+  .tug-side { display: flex; align-items: center; font-weight: 800; font-size: 20px; color: rgba(255,255,255,0.95); transition: width 0.6s cubic-bezier(0.25, 0.9, 0.3, 1), filter 0.5s, opacity 0.5s; min-width: 0; }
+  .tug-a { background: var(--accent); justify-content: flex-start; padding-left: 18px; }
+  .tug-b { background: #4A86C8; justify-content: flex-end; padding-right: 18px; }
+  .tug-bar.decided .tug-side.loser { filter: saturate(0.15); opacity: 0.55; }
+  .tug-footer { margin-top: 16px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.12); display: flex; justify-content: space-between; font-size: 16px; color: var(--text-dim); font-weight: 500; }
+  .tug-footer .votes { color: var(--text); font-weight: 700; }
+  .tug-winner-tag { margin-top: 16px; display: flex; align-items: center; justify-content: center; gap: 12px; font-size: clamp(22px, 2.4vw, 32px); font-weight: 800; color: var(--gold); animation: card-in 0.4s ease-out both; }
 
   @keyframes card-in {
     from { opacity: 0; transform: translateY(24px) scale(0.97); }
@@ -224,14 +265,28 @@
   /* ---------- Wheel (slides in from the right, half off-screen) ---------- */
   #wheel-card {
     position: fixed;
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
     top: 50%;
     right: 0;
     width: min(96vh, 900px);
     aspect-ratio: 1;
     transform: translate(45%, -50%);
+    zoom: var(--w-zoom, 1);
     animation: wheel-in 0.6s cubic-bezier(0.2, 0.9, 0.25, 1) both;
   }
   #wheel-card.leaving { animation: wheel-out 0.45s cubic-bezier(0.55, 0, 0.75, 0.4) both; }
+  #wheel-card.pos-left { right: auto; left: 0; transform: translate(-45%, -50%); animation-name: wheel-in-l; }
+  #wheel-card.pos-left.leaving { animation-name: wheel-out-l; }
+  @keyframes wheel-in-l  { from { transform: translate(-160%, -50%); } to { transform: translate(-45%, -50%); } }
+  @keyframes wheel-out-l { from { transform: translate(-45%, -50%); } to { transform: translate(-160%, -50%); } }
+  #wheel-card.pos-left .wheel-pointer {
+    left: auto; right: -8px;
+    border-left: none;
+    border-right: 28px solid var(--accent);
+  }
+  .wheel-winner.side-right { left: auto; right: 5vw; }
   @keyframes wheel-in  { from { transform: translate(160%, -50%); } to { transform: translate(45%, -50%); } }
   @keyframes wheel-out { from { transform: translate(45%, -50%); } to { transform: translate(160%, -50%); } }
   .wheel-wrap { position: relative; width: 100%; height: 100%; filter: drop-shadow(-14px 0 34px rgba(0,0,0,0.5)); }
@@ -313,21 +368,45 @@
   .donut-pill span { color: var(--text-dim); font-weight: 500; }
 
   /* ---------- Bullet points ---------- */
-  #bullets-card { position: fixed; right: 4vw; top: 50%; transform: translateY(-50%); width: min(340px, 34vw); padding: 26px 26px; }
-  .bul-title { font-size: 13px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 18px; }
-  .bul-list { position: relative; }
+  #bullets-card {
+    position: fixed;
+    right: 4vw;
+    top: 3vh;
+    bottom: 3vh;
+    width: min(400px, 38vw);
+    padding: 30px 28px;
+    display: flex;
+    flex-direction: column;
+    background: rgba(18, 20, 25, var(--band-a, 0.92));
+    zoom: var(--w-zoom, 1);
+  }
+  #bullets-card.pos-left { right: auto; left: 4vw; }
+  .bul-title { font-size: clamp(14px, 2vh, 20px); font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 18px; }
+  .bul-list { position: relative; flex: 1; display: flex; flex-direction: column; justify-content: space-evenly; }
   .bul-list::before { content: ''; position: absolute; left: 7px; top: 8px; bottom: 8px; width: 2px; background: rgba(255,255,255,0.15); }
-  .bul-item { position: relative; padding: 7px 0 7px 30px; font-size: 16px; font-weight: 600; color: var(--text-dim); transition: color 0.3s; }
-  .bul-item::before { content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; border-radius: 50%; background: #3a404b; border: 3px solid rgba(18,20,25,0.9); transition: background 0.3s, box-shadow 0.3s; }
+  .bul-item { position: relative; padding: 8px 0 8px 38px; font-size: clamp(18px, 2.8vh, 32px); font-weight: 600; color: var(--text-dim); transition: color 0.3s; }
+  .bul-item::before { content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 20px; height: 20px; border-radius: 50%; background: #3a404b; border: 3px solid rgba(18,20,25,0.9); transition: background 0.3s, box-shadow 0.3s; }
   .bul-item.done { color: rgba(255,255,255,0.38); }
   .bul-item.done::before { background: rgba(29,158,117,0.45); }
   .bul-item.active { color: #fff; font-weight: 800; }
   .bul-item.active::before { background: var(--accent); box-shadow: 0 0 0 5px rgba(29,158,117,0.25); }
 
   /* ---------- World map ---------- */
-  #map-card { text-align: center; }
-  .map-title { font-size: 15px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 12px; }
-  #map-svg { height: 34vh; width: auto; max-width: 90vw; display: block; margin: 0 auto; }
+  #map-card {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(12, 14, 18, calc(var(--band-a, 0.93) * 0.68));
+    zoom: var(--w-zoom, 1);
+    animation: band-in 0.55s cubic-bezier(0.2, 0.9, 0.25, 1) both;
+    text-align: center;
+  }
+  #map-card.leaving { animation: band-out 0.4s cubic-bezier(0.55, 0, 0.75, 0.4) both; }
+  .map-title { font-size: clamp(20px, 2.4vw, 34px); font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 18px; text-shadow: 0 2px 10px rgba(0,0,0,0.6); }
+  #map-svg { height: 66vh; width: auto; max-width: 94vw; display: block; margin: 0 auto; }
   .map-pin { animation: pin-in 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) both; }
   @keyframes pin-in { from { opacity: 0; transform: scale(0); } to { opacity: 1; transform: scale(1); } }
   .map-footer { margin-top: 14px; font-size: 14px; color: var(--text-dim); font-weight: 500; text-align: center; }
@@ -461,6 +540,7 @@
 <div class="stage">
   <!-- Poll -->
   <div id="poll-card" class="band hidden">
+   <div class="strip">
     <div class="poll-question" id="poll-question"></div>
     <div id="poll-rows"></div>
     <div class="poll-first hidden" id="poll-first"></div>
@@ -468,18 +548,21 @@
       <span><span class="votes" id="poll-count">0</span> <span id="poll-count-word">votes</span></span>
       <span class="hint" id="poll-hint"></span>
     </div>
+   </div>
   </div>
 
   <!-- Word cloud -->
   <div id="cloud-card" class="band hidden">
+   <div class="strip">
     <div class="cloud-title">Live from the chat</div>
     <div class="cloud-words" id="cloud-words">
       <div class="cloud-empty">Waiting for the first messages…</div>
     </div>
+   </div>
   </div>
 
   <!-- Wheel -->
-  <div id="wheel-card" class="card hidden">
+  <div id="wheel-card" class="hidden">
     <div class="wheel-wrap">
       <div class="wheel-pointer"></div>
       <svg id="wheel-svg" viewBox="0 0 400 400">
@@ -500,15 +583,18 @@
 
   <!-- Speedometer -->
   <div id="meter-card" class="band hidden">
+   <div class="strip">
     <div class="meter-question" id="meter-question"></div>
     <svg id="meter-svg" viewBox="0 0 400 230"></svg>
     <div class="meter-avg" id="meter-avg">–</div>
     <div class="meter-sub" id="meter-sub">waiting for ratings</div>
     <div class="meter-footer">type a number from 1 to 10 in chat</div>
+   </div>
   </div>
 
   <!-- Tug of war -->
   <div id="tug-card" class="band hidden">
+   <div class="strip">
    <div class="tug-inner">
     <div class="tug-question" id="tug-question"></div>
     <div class="tug-names"><span class="tn-a" id="tug-name-a"></span><span class="tn-b" id="tug-name-b"></span></div>
@@ -522,6 +608,7 @@
       <span id="tug-hint">type A or B in chat</span>
     </div>
    </div>
+   </div>
   </div>
 
   <!-- Bullet points -->
@@ -531,7 +618,7 @@
   </div>
 
   <!-- World map -->
-  <div id="map-card" class="band hidden">
+  <div id="map-card" class="hidden">
     <div class="map-title">Where is everyone watching from?</div>
     <svg id="map-svg" viewBox="0 0 1000 500"></svg>
     <div class="map-footer">type your country in the chat</div>
@@ -565,12 +652,12 @@
   </div>
 </div>
 
-<script src="ssn-link.js?v=7"></script>
+<script src="ssn-link.js?v=8"></script>
 <script>
 (function () {
   'use strict';
 
-  console.log('[webinar-kit] overlay v7, ssn-link v' + (window.SSNLink && SSNLink.VERSION));
+  console.log('[webinar-kit] overlay v8, ssn-link v' + (window.SSNLink && SSNLink.VERSION));
 
   var $ = function (id) { return document.getElementById(id); };
 
@@ -593,6 +680,22 @@
    * Widget switching
    * ============================================================ */
   var cards = { poll: $('poll-card'), cloud: $('cloud-card'), wheel: $('wheel-card'), meter: $('meter-card'), tug: $('tug-card'), bullets: $('bullets-card'), map: $('map-card'), donut: $('donut-card'), chatfall: $('chatfall-card') };
+
+  /* Appearance settings sent by the panel with each go-live:
+   * { pos, scale, accent, bg }. Missing fields fall back to defaults. */
+  var POS_CLASSES = ['pos-bottom', 'pos-middle', 'pos-top', 'pos-left', 'pos-right'];
+  function applyStyle(el, style) {
+    style = style || {};
+    POS_CLASSES.forEach(function (c) { el.classList.remove(c); });
+    if (style.pos && style.pos !== 'bottom' && style.pos !== 'right') {
+      el.classList.add('pos-' + style.pos);
+    }
+    el.style.setProperty('--w-zoom', style.scale || 1);
+    if (style.accent) el.style.setProperty('--accent', style.accent);
+    else el.style.removeProperty('--accent');
+    if (typeof style.bg === 'number') el.style.setProperty('--band-a', style.bg);
+    else el.style.removeProperty('--band-a');
+  }
 
   function show(widget) {
     for (var k in cards) cards[k].classList.toggle('hidden', k !== widget);
@@ -622,6 +725,7 @@
    * Poll
    * ============================================================ */
   function startPoll(cfg) {
+    applyStyle(cards.poll, cfg.style);
     poll.question = cfg.question || '';
     poll.options = (cfg.options || []).slice(0, 6);
     poll.counts = poll.options.map(function () { return 0; });
@@ -736,6 +840,7 @@
   var STOPWORDS = new Set(('a,an,and,are,as,at,be,been,but,by,can,could,did,do,does,for,from,had,has,have,he,her,hers,him,his,how,i,if,in,into,is,it,its,just,like,me,my,no,not,of,on,or,our,out,so,she,that,the,their,them,then,there,they,this,to,too,us,was,we,were,what,when,which,who,why,will,with,would,you,your,yours,im,its,dont,cant,thats,youre,were,ive,id,also,get,got,really,very,much,lol,haha,yes,yeah,yep,no,nope,ok,okay,hi,hello,hey,thanks,thank,please,one,two,about,all,am,any,because,here,more,now,some,than,up,down,over,under,again,only,other,while,being,before,after,such,each,few,most,own,same').split(','));
 
   function startCloud(cmd) {
+    applyStyle(cards.cloud, cmd && cmd.style);
     cloud.counts = (cmd && cmd.resume && cmd.resume.counts) ? cmd.resume.counts : {};
     renderCloud();
     show('cloud');
@@ -930,12 +1035,16 @@
   function truncate(s, n) { return s.length > n ? s.slice(0, n - 1) + '…' : s; }
 
   function showWheel(cmd) {
+    applyStyle(cards.wheel, cmd.style);
+    wheel.side = (cmd.style && cmd.style.pos === 'left') ? 'left' : 'right';
     drawWheel(cmd.entries || []);
     $('wheel-winner').classList.add('hidden');
     show('wheel');
   }
 
   function spinWheel(cmd) {
+    applyStyle(cards.wheel, cmd.style);
+    wheel.side = (cmd.style && cmd.style.pos === 'left') ? 'left' : 'right';
     // redraw with the exact entry snapshot the panel used, so the
     // winnerIndex always points at the right slice
     drawWheel(cmd.entries || []);
@@ -947,8 +1056,10 @@
     var seg = 360 / n;
     var center = (cmd.winnerIndex + 0.5) * seg;
     var jitter = typeof cmd.jitter === 'number' ? cmd.jitter : 0; // -0.35..0.35 of a segment
-    // pointer sits at the wheel's left edge (180deg clockwise from top)
-    var base = ((180 - center) % 360 + 360) % 360;
+    // pointer angle: wheel on the right of the screen has its pointer on
+    // its left rim (180deg); wheel on the left has it on its right rim (90deg)
+    var pA = wheel.side === 'left' ? 90 : 180;
+    var base = ((pA - center) % 360 + 360) % 360;
     var target = 5 * 360 + base + jitter * seg;
 
     var rotor = $('wheel-rotor');
@@ -964,6 +1075,7 @@
       var wname = wheel.entries[cmd.winnerIndex] || '';
       $('wheel-winner-name').textContent = wname;
       fillAvatar($('wheel-winner-avatar'), wname, cmd.winnerImg);
+      $('wheel-winner').classList.toggle('side-right', wheel.side === 'left');
       $('wheel-winner').classList.remove('hidden');
       confetti.celebrate();
     }, matchMedia('(prefers-reduced-motion: reduce)').matches ? 1300 : 6500);
@@ -1091,6 +1203,7 @@
   }
 
   function startMeter(cmd) {
+    applyStyle(cards.meter, cmd.style);
     meter.question = cmd.question || 'On a scale of 1 to 10?';
     meter.values = (cmd.resume && cmd.resume.values) ? cmd.resume.values : {};
     $('meter-question').textContent = meter.question;
@@ -1128,6 +1241,9 @@
    * Tug of war: two options, one bar, the split slides live
    * ============================================================ */
   function startTug(cmd) {
+    var tugStyle = cmd.style || {};
+    if (!tugStyle.pos) tugStyle.pos = 'middle'; // tug lives mid-screen by default
+    applyStyle(cards.tug, tugStyle);
     tug.options = [(cmd.options && cmd.options[0]) || 'A', (cmd.options && cmd.options[1]) || 'B'];
     tug.counts = (cmd.resume && cmd.resume.counts) ? cmd.resume.counts.slice(0, 2) : [0, 0];
     tug.votes = (cmd.resume && cmd.resume.votes) ? cmd.resume.votes : {};
@@ -1191,6 +1307,7 @@
    * Bullet points: session agenda, host steps through items
    * ============================================================ */
   function showBullets(cmd) {
+    applyStyle(cards.bullets, cmd.style);
     bullets.title = cmd.title || 'Coming up';
     bullets.items = cmd.items || [];
     bullets.active = Math.max(0, Math.min(cmd.active || 0, bullets.items.length - 1));
@@ -1257,6 +1374,7 @@
   }
 
   function startMap(cmd) {
+    applyStyle(cards.map, cmd.style);
     mapw.counts = (cmd.resume && cmd.resume.counts) ? cmd.resume.counts : {};
     mapw.users = (cmd.resume && cmd.resume.users) ? cmd.resume.users : {};
     drawMapBase();
@@ -1266,6 +1384,10 @@
 
   function feedMap(msg) {
     if (active !== 'map') return;
+    if (!SSNLink.matchLocation) {
+      $('map-svg').innerHTML = '<text x="500" y="250" text-anchor="middle" fill="#fff" font-size="26" font-family="Archivo, sans-serif">ssn-link.js is outdated \u2014 upload the latest version</text>';
+      return;
+    }
     var loc = SSNLink.matchLocation(msg.message);
     if (!loc) return;
     var key = loc.type + ':' + loc.key;
@@ -1316,6 +1438,7 @@
   var DONUT_FILLS = ['rgba(255,255,255,0.62)','rgba(255,255,255,0.30)','rgba(255,255,255,0.48)','rgba(255,255,255,0.22)','rgba(255,255,255,0.40)','rgba(255,255,255,0.16)'];
 
   function startDonut(cmd) {
+    applyStyle(cards.donut, cmd.style);
     donut.question = cmd.question || '';
     donut.options = (cmd.options || []).slice(0, 6);
     donut.counts = donut.options.map(function () { return 0; });
@@ -1438,6 +1561,7 @@
   var CF_COLORS = ['#E2574C', '#F3D13C', '#6F9BE0', '#9BA84A', '#4F9E6B', '#C46FB4', '#E8935A', '#5BBBB0'];
 
   function startChatfall(cmd) {
+    applyStyle(cards.chatfall, cmd.style);
     var layer = $('chatfall-card');
     layer.querySelectorAll('.cf-card').forEach(function (el) { el.remove(); });
     $('cf-title').textContent = cmd.title || 'Your feedback';
@@ -1475,7 +1599,7 @@
     var card = document.createElement('div');
     card.className = 'cf-card';
     card.style.width = cf.colW + 'px';
-    card.style.background = CF_COLORS[wordHash(String(name)) % CF_COLORS.length];
+    card.style.background = CF_COLORS[(cf.seq = (cf.seq || 0) + 1) % CF_COLORS.length];
     var msgEl = document.createElement('div');
     msgEl.className = 'cf-msg';
     msgEl.textContent = String(message).slice(0, 160);

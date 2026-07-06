@@ -351,6 +351,13 @@
   details.fold[open] summary { color: var(--ink); border-bottom: 1px solid var(--line); }
   details.fold > *:not(summary) { margin: 14px 18px; }
   details.fold footer { margin-top: 0; padding: 14px 18px; }
+  details.app { margin-top: 18px; }
+  .app-grid { display: flex; flex-wrap: wrap; gap: 14px 26px; align-items: center; padding: 14px 18px; }
+  .app-grid label { display: flex; align-items: center; gap: 9px; font-size: 13px; font-weight: 700; color: var(--ink-soft); }
+  .app-grid select, .app-grid input[type=color] { font: inherit; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 5px 8px; height: 34px; }
+  .app-grid input[type=range] { width: 110px; accent-color: var(--accent); }
+  .app-grid .app-val { font-variant-numeric: tabular-nums; color: var(--ink); min-width: 40px; }
+  .app-grid .app-reset { margin-left: auto; }
 
   #sd-block { margin-top: 12px; }
   #sd-urls { margin: 10px 0 8px; display: flex; flex-direction: column; gap: 5px; }
@@ -403,7 +410,7 @@
 
 <div class="wrap" id="main-view">
   <header>
-    <h1>Kejdis <span>CP · v7</span></h1>
+    <h1>Kejdis <span>CP · v8</span></h1>
     <div class="conn">
       <span><span class="dot" id="dot-chat"></span>chat</span>
       <span><span class="dot" id="dot-control"></span>overlay link</span>
@@ -611,7 +618,7 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="ssn-link.js?v=7"></script>
+<script src="ssn-link.js?v=8"></script>
 <script>
 (function () {
   'use strict';
@@ -810,7 +817,7 @@
       }
     }
     // map location mirror, one place per person
-    if (mapw.live) {
+    if (mapw.live && SSNLink.matchLocation) {
       var loc = SSNLink.matchLocation(msg.message);
       if (loc) {
         var lkey = loc.type + ':' + loc.key;
@@ -871,37 +878,7 @@
    * ============================================================ */
   function onControl(cmd) {
     if (cmd.cmd === 'overlay:hello') {
-      // an overlay just (re)loaded — resend whatever is live
-      if (liveWidget === 'poll' && poll.live) {
-        send({ cmd: 'poll:start', question: poll.question, options: poll.options,
-               resume: { counts: poll.counts, votes: poll.votes } });
-        if (poll.revealed) {
-          send({ cmd: 'poll:reveal', correctIndex: poll.correctIndex,
-                 firstCorrect: poll.firstCorrect ? { name: poll.firstCorrect.name, img: poll.firstCorrect.img || null } : null });
-        } else if (poll.ended) {
-          send({ cmd: 'poll:end' });
-        }
-      } else if (liveWidget === 'cloud' && cloud.live) {
-        send({ cmd: 'cloud:start', resume: { counts: cloud.counts } });
-      } else if (liveWidget === 'wheel') {
-        send({ cmd: 'wheel:show', entries: wheel.entries });
-      } else if (liveWidget === 'tug' && tug.live) {
-        send({ cmd: 'tug:start', question: tug.question, options: tug.options,
-               resume: { counts: tug.counts, votes: tug.votes } });
-        if (tug.decided) send({ cmd: 'tug:reveal' });
-      } else if (liveWidget === 'meter' && meter.live) {
-        send({ cmd: 'meter:start', question: meter.question, resume: { values: meter.values } });
-      } else if (liveWidget === 'bullets' && bullets.shown) {
-        send(bulletsPayload());
-      } else if (liveWidget === 'map' && mapw.live) {
-        send({ cmd: 'map:start', resume: { counts: mapw.counts, users: mapw.users } });
-      } else if (liveWidget === 'donut' && donut.live) {
-        send({ cmd: 'donut:start', question: donut.question, options: donut.options,
-               resume: { counts: donut.counts, votes: donut.votes } });
-      } else if (liveWidget === 'chatfall' && chatfall.live) {
-        send({ cmd: 'chatfall:start', title: chatfall.title,
-               resume: { messages: chatfall.recent } });
-      }
+      resendWidget(); // an overlay just (re)loaded
       return;
     }
     if (cmd.cmd === 'trigger') runTrigger(cmd.action);
@@ -909,6 +886,44 @@
     // action doing a background GET to:
     // https://io.socialstream.ninja/SESSION/trigger/null/spin?channel=6
     if (!cmd.cmd && cmd.action === 'trigger' && cmd.value) runTrigger(String(cmd.value));
+  }
+
+  // resend whatever is live, with its current appearance. Used for
+  // overlay reloads and for live style changes from the Appearance folds.
+  function resendWidget() {
+    if (liveWidget === 'poll' && poll.live) {
+      send({ cmd: 'poll:start', question: poll.question, options: poll.options,
+             style: getStyle('poll'),
+             resume: { counts: poll.counts, votes: poll.votes } });
+      if (poll.revealed) {
+        send({ cmd: 'poll:reveal', correctIndex: poll.correctIndex,
+               firstCorrect: poll.firstCorrect ? { name: poll.firstCorrect.name, img: poll.firstCorrect.img || null } : null });
+      } else if (poll.ended) {
+        send({ cmd: 'poll:end' });
+      }
+    } else if (liveWidget === 'cloud' && cloud.live) {
+      send({ cmd: 'cloud:start', style: getStyle('cloud'), resume: { counts: cloud.counts } });
+    } else if (liveWidget === 'wheel') {
+      send({ cmd: 'wheel:show', entries: wheel.entries, style: getStyle('wheel') });
+    } else if (liveWidget === 'tug' && tug.live) {
+      send({ cmd: 'tug:start', question: tug.question, options: tug.options,
+             style: getStyle('tug'),
+             resume: { counts: tug.counts, votes: tug.votes } });
+      if (tug.decided) send({ cmd: 'tug:reveal' });
+    } else if (liveWidget === 'meter' && meter.live) {
+      send({ cmd: 'meter:start', question: meter.question, style: getStyle('meter'), resume: { values: meter.values } });
+    } else if (liveWidget === 'bullets' && bullets.shown) {
+      send(bulletsPayload());
+    } else if (liveWidget === 'map' && mapw.live) {
+      send({ cmd: 'map:start', style: getStyle('map'), resume: { counts: mapw.counts, users: mapw.users } });
+    } else if (liveWidget === 'donut' && donut.live) {
+      send({ cmd: 'donut:start', question: donut.question, options: donut.options,
+             style: getStyle('donut'),
+             resume: { counts: donut.counts, votes: donut.votes } });
+    } else if (liveWidget === 'chatfall' && chatfall.live) {
+      send({ cmd: 'chatfall:start', title: chatfall.title, style: getStyle('chatfall'),
+             resume: { messages: chatfall.recent } });
+    }
   }
 
   function runTrigger(action) {
@@ -938,6 +953,90 @@
    * Tabs
    * ============================================================ */
   var TABS = ['poll', 'tug', 'meter', 'cloud', 'wheel', 'bullets', 'map', 'donut', 'chatfall'];
+
+  /* ============================================================
+   * Appearance settings: position, size, accent, background.
+   * Saved per widget in this browser; sent with every go-live and
+   * applied instantly if the widget is currently on the overlay.
+   * ============================================================ */
+  var POS_OPTIONS = {
+    poll: ['bottom', 'middle', 'top'],
+    tug: ['middle', 'bottom', 'top'],
+    meter: ['bottom', 'middle', 'top'],
+    cloud: ['bottom', 'middle', 'top'],
+    wheel: ['right', 'left'],
+    bullets: ['right', 'left'],
+    map: null, donut: null, chatfall: null
+  };
+  var BG_CAPABLE = { poll: 1, tug: 1, meter: 1, cloud: 1, bullets: 1, map: 1 };
+
+  function styleDefaults(t) {
+    return { pos: POS_OPTIONS[t] ? POS_OPTIONS[t][0] : null, scale: 1, accent: '#1D9E75', bg: 0.92 };
+  }
+  function getStyle(t) {
+    var d = styleDefaults(t);
+    try {
+      var saved = JSON.parse(localStorage.getItem('kitstyle_' + t) || '{}');
+      for (var k in saved) d[k] = saved[k];
+    } catch (e) {}
+    return d;
+  }
+  function saveStyle(t, st) {
+    try { localStorage.setItem('kitstyle_' + t, JSON.stringify(st)); } catch (e) {}
+    if (liveWidget === t) resendWidget(); // apply live
+  }
+
+  function buildAppearance(t) {
+    var st = getStyle(t);
+    var box = document.createElement('details');
+    box.className = 'fold app';
+    var posHtml = POS_OPTIONS[t]
+      ? '<label>Position <select data-k="pos">' + POS_OPTIONS[t].map(function (o) {
+          return '<option value="' + o + '"' + (o === st.pos ? ' selected' : '') + '>' + o + '</option>';
+        }).join('') + '</select></label>'
+      : '';
+    var bgHtml = BG_CAPABLE[t]
+      ? '<label>Background <input type="range" data-k="bg" min="20" max="100" value="' + Math.round(st.bg * 100) + '"> <b class="app-val" data-v="bg">' + Math.round(st.bg * 100) + '%</b></label>'
+      : '';
+    box.innerHTML = '<summary>Appearance</summary><div class="app-grid">' +
+      posHtml +
+      '<label>Size <input type="range" data-k="scale" min="60" max="160" value="' + Math.round(st.scale * 100) + '"> <b class="app-val" data-v="scale">' + Math.round(st.scale * 100) + '%</b></label>' +
+      '<label>Accent <input type="color" data-k="accent" value="' + st.accent + '"></label>' +
+      bgHtml +
+      '<button class="ghost app-reset">Reset</button></div>';
+
+    function refresh() {
+      var cur = getStyle(t);
+      box.querySelectorAll('[data-k]').forEach(function (inp) {
+        var k = inp.dataset.k;
+        if (k === 'pos') inp.value = cur.pos;
+        else if (k === 'accent') inp.value = cur.accent;
+        else inp.value = Math.round(cur[k] * 100);
+      });
+      box.querySelectorAll('.app-val').forEach(function (v) {
+        v.textContent = Math.round(cur[v.dataset.v] * 100) + '%';
+      });
+    }
+    box.addEventListener('input', function (e) {
+      var k = e.target.dataset.k;
+      if (!k) return;
+      var cur = getStyle(t);
+      if (k === 'pos') cur.pos = e.target.value;
+      else if (k === 'accent') cur.accent = e.target.value;
+      else cur[k] = parseInt(e.target.value, 10) / 100;
+      saveStyle(t, cur);
+      refresh();
+    });
+    box.querySelector('.app-reset').addEventListener('click', function () {
+      try { localStorage.removeItem('kitstyle_' + t); } catch (e) {}
+      saveStyle(t, getStyle(t));
+      refresh();
+    });
+    return box;
+  }
+  TABS.forEach(function (t) {
+    $('panel-' + t).appendChild(buildAppearance(t));
+  });
   function switchTab(name) {
     TABS.forEach(function (t) {
       $('tab-' + t).classList.toggle('active', t === name);
@@ -1065,7 +1164,7 @@
     poll.correctIndex = markedCorrectIndex(); // null if not a quiz
     poll.firstCorrect = null;
 
-    send({ cmd: 'poll:start', question: q, options: opts });
+    send({ cmd: 'poll:start', question: q, options: opts, style: getStyle('poll') });
     setAir('poll');
     switchTab('poll');
     $('btn-poll-end').disabled = false;
@@ -1139,7 +1238,7 @@
   function goLiveCloud() {
     stopAllLive();
     cloud = { live: true, msgCount: 0, counts: {} };
-    send({ cmd: 'cloud:start' });
+    send({ cmd: 'cloud:start', style: getStyle('cloud') });
     setAir('cloud');
     switchTab('cloud');
     $('btn-cloud-clear').disabled = false;
@@ -1215,7 +1314,7 @@
 
   $('btn-wheel-show').addEventListener('click', function () {
     if (!wheel.entries.length) { toast('Add at least one name first'); return; }
-    send({ cmd: 'wheel:show', entries: wheel.entries });
+    send({ cmd: 'wheel:show', entries: wheel.entries, style: getStyle('wheel') });
     setAir('wheel');
     switchTab('wheel');
     toast('Wheel is on the overlay');
@@ -1226,6 +1325,7 @@
     var winnerIndex = Math.floor(Math.random() * wheel.entries.length);
     var jitter = (Math.random() * 0.7) - 0.35; // stay inside the slice
     send({ cmd: 'wheel:spin', entries: wheel.entries, winnerIndex: winnerIndex, jitter: jitter,
+           style: getStyle('wheel'),
            winnerImg: wheel.images[wheel.entries[winnerIndex]] || null });
     setAir('wheel');
     switchTab('wheel');
@@ -1257,7 +1357,7 @@
     if (!q || !a || !b2) { toast('Tug of war needs a question and both sides'); switchTab('tug'); return; }
     stopAllLive();
     tug = { live: true, decided: false, question: q, options: [a, b2], counts: [0, 0], votes: {} };
-    send({ cmd: 'tug:start', question: q, options: [a, b2] });
+    send({ cmd: 'tug:start', question: q, options: [a, b2], style: getStyle('tug') });
     setAir('tug');
     switchTab('tug');
     $('btn-tug-reveal').disabled = false;
@@ -1291,7 +1391,7 @@
     if (!q) { toast('Type a question first'); switchTab('meter'); return; }
     stopAllLive();
     meter = { live: true, question: q, values: {} };
-    send({ cmd: 'meter:start', question: q });
+    send({ cmd: 'meter:start', question: q, style: getStyle('meter') });
     setAir('meter');
     switchTab('meter');
     renderMeterStatus();
@@ -1313,7 +1413,7 @@
    * ============================================================ */
   function bulletsPayload() {
     return { cmd: 'bullets:show', title: $('bul-title-in').value.trim() || "Today's session",
-             items: bullets.items, active: bullets.active };
+             items: bullets.items, active: bullets.active, style: getStyle('bullets') };
   }
 
   function goLiveBullets() {
@@ -1357,7 +1457,7 @@
   function goLiveMap() {
     stopAllLive();
     mapw = { live: true, counts: {}, users: {} };
-    send({ cmd: 'map:start' });
+    send({ cmd: 'map:start', style: getStyle('map') });
     setAir('map');
     switchTab('map');
     renderMapStatus();
@@ -1414,7 +1514,7 @@
     if (opts.length < 2) { toast('The donut needs at least 2 options'); switchTab('donut'); return; }
     stopAllLive();
     donut = { live: true, question: q, options: opts, counts: opts.map(function () { return 0; }), votes: {} };
-    send({ cmd: 'donut:start', question: q, options: opts });
+    send({ cmd: 'donut:start', question: q, options: opts, style: getStyle('donut') });
     setAir('donut');
     switchTab('donut');
     renderDonutStatus();
@@ -1436,7 +1536,7 @@
     var title = $('chatfall-q').value.trim();
     stopAllLive();
     chatfall = { live: true, title: title, count: 0, recent: [] };
-    send({ cmd: 'chatfall:start', title: title });
+    send({ cmd: 'chatfall:start', title: title, style: getStyle('chatfall') });
     setAir('chatfall');
     switchTab('chatfall');
     $('chatfall-status').textContent = 'live, waiting for messages';

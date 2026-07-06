@@ -101,3 +101,8 @@ Poll, tug of war, meter, word cloud, and map render as a band across the bottom 
 ## v6
 
 Word cloud redesigned: words pack around the center horizontally and vertically in ten bright colors (each word keeps its color and orientation between updates), sized by frequency, never overlapping, and it adapts to the space it gets. New falling chat wall widget (9th tab). The control panel tab bar is now an icon dock so all nine tabs fit in a narrow OBS dock, and the meeting-chat box plus help/shortcuts moved into collapsible sections.
+
+
+## v8
+
+Every widget tab now has an Appearance section: position (bottom/middle/top for the band widgets, left/right for wheel and bullets), size (scales the whole widget including fonts), accent color, and background darkness where it applies. Settings are saved per widget in the browser, ride along with every go-live, and apply instantly if the widget is already on screen. Other v8 changes: the meter always shows the full 1 to 10 arc with much bigger text, tug of war sits mid-screen full width by default with a 48px bar, the wheel lost its background box, bullets run full height with larger type, the map is full screen, and the feedback wall rotates through its colors card by card. If map pins ever stop appearing, the overlay now says so on screen instead of failing silently (it means ssn-link.js is outdated on the server).
