@@ -403,7 +403,7 @@
 
 <div class="wrap" id="main-view">
   <header>
-    <h1>Kejdis <span>CP</span></h1>
+    <h1>Kejdis <span>CP · v7</span></h1>
     <div class="conn">
       <span><span class="dot" id="dot-chat"></span>chat</span>
       <span><span class="dot" id="dot-control"></span>overlay link</span>
@@ -425,7 +425,7 @@
     <button id="tab-bullets" role="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="9" y1="6" x2="20" y2="6"/><line x1="9" y1="12" x2="20" y2="12"/><line x1="9" y1="18" x2="20" y2="18"/><circle cx="4.5" cy="6" r="1.4"/><circle cx="4.5" cy="12" r="1.4"/><circle cx="4.5" cy="18" r="1.4"/></svg><span class="tab-label">Bullets</span><span class="on-air hidden" id="air-bullets"></span></button>
     <button id="tab-map" role="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><span class="tab-label">Map</span><span class="on-air hidden" id="air-map"></span></button>
     <button id="tab-donut" role="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><line x1="12" y1="3" x2="12" y2="8.5"/></svg><span class="tab-label">Donut</span><span class="on-air hidden" id="air-donut"></span></button>
-    <button id="tab-chatfall" role="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-8 8H4l2-3a8 8 0 1 1 15-5z"/><line x1="12" y1="2" x2="12" y2="5" stroke-dasharray="1 2"/></svg><span class="tab-label">Chat</span><span class="on-air hidden" id="air-chatfall"></span></button>
+    <button id="tab-chatfall" role="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-8 8H4l2-3a8 8 0 1 1 15-5z"/><line x1="12" y1="2" x2="12" y2="5" stroke-dasharray="1 2"/></svg><span class="tab-label">Feedback</span><span class="on-air hidden" id="air-chatfall"></span></button>
   </div>
 
   <!-- ============ POLL ============ -->
@@ -486,30 +486,6 @@
     </div>
     <div class="winner-note hidden" id="wheel-winner-note"></div>
   </div>
-
-  <!-- ============ FALLING CHAT WALL ============ -->
-  <div class="panel hidden" id="panel-chatfall">
-    <p style="font-size:14px; color:var(--ink-soft); line-height:1.6; margin-bottom:16px;">
-      Every chat message falls from the top as a colored sticky card and stacks up from the bottom of the screen. When it fills up, the oldest cards at the bottom vanish to make room. Great for open questions like "what's your takeaway?"
-    </p>
-    <div class="field">
-      <label for="chatfall-q">Title shown on the overlay</label>
-      <input type="text" id="chatfall-q" placeholder="What was your takeaway from today?" maxlength="100">
-    </div>
-    <div class="actions">
-      <button class="live" id="btn-chatfall-live">Go live on overlay</button>
-      <div class="spacer"></div>
-      <span class="sd-hint" id="chatfall-status"></span>
-    </div>
-  </div>
-
-  <details class="fold">
-    <summary>Chat</summary>
-    <div class="chat-send">
-      <input id="chat-msg-input" type="text" placeholder="Send a message to everyone in the meeting chat" maxlength="300" autocomplete="off">
-      <button class="primary" id="btn-chat-send">Send</button>
-    </div>
-  </details>
 
   <!-- ============ TUG OF WAR ============ -->
   <div class="panel hidden" id="panel-tug">
@@ -596,6 +572,30 @@
     </div>
   </div>
 
+  <!-- ============ FEEDBACK WALL ============ -->
+  <div class="panel hidden" id="panel-chatfall">
+    <p style="font-size:14px; color:var(--ink-soft); line-height:1.6; margin-bottom:16px;">
+      Every chat message falls from the top as a colored sticky card and stacks up from the bottom of the screen. When it fills up, the oldest cards at the bottom vanish to make room. Great for open questions like "what's your takeaway?"
+    </p>
+    <div class="field">
+      <label for="chatfall-q">Title shown on the overlay</label>
+      <input type="text" id="chatfall-q" placeholder="What was your takeaway from today?" maxlength="100">
+    </div>
+    <div class="actions">
+      <button class="live" id="btn-chatfall-live">Go live on overlay</button>
+      <div class="spacer"></div>
+      <span class="sd-hint" id="chatfall-status"></span>
+    </div>
+  </div>
+
+  <details class="fold">
+    <summary>Chat</summary>
+    <div class="chat-send">
+      <input id="chat-msg-input" type="text" placeholder="Send a message to everyone in the meeting chat" maxlength="300" autocomplete="off">
+      <button class="primary" id="btn-chat-send">Send</button>
+    </div>
+  </details>
+
   <details class="fold" id="help-fold">
   <summary>Help &amp; shortcuts</summary>
   <footer>
@@ -611,7 +611,7 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="ssn-link.js?v=6"></script>
+<script src="ssn-link.js?v=7"></script>
 <script>
 (function () {
   'use strict';
@@ -682,7 +682,7 @@
     ['bullets-prev', 'agenda: previous item'],
     ['map-live', 'launch the world map'],
     ['donut-live', 'launch the donut poll'],
-    ['chatfall-live', 'launch the falling chat wall'],
+    ['chatfall-live', 'launch the feedback wall'],
     ['hide', 'hide the overlay']
   ];
   function renderSdUrls() {
@@ -1440,7 +1440,7 @@
     setAir('chatfall');
     switchTab('chatfall');
     $('chatfall-status').textContent = 'live, waiting for messages';
-    toast('Chat wall is live');
+    toast('Feedback wall is live');
   }
   $('btn-chatfall-live').addEventListener('click', goLiveChatfall);
 

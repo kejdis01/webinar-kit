@@ -565,12 +565,12 @@
   </div>
 </div>
 
-<script src="ssn-link.js?v=6"></script>
+<script src="ssn-link.js?v=7"></script>
 <script>
 (function () {
   'use strict';
 
-  console.log('[webinar-kit] overlay v6, ssn-link v' + (window.SSNLink && SSNLink.VERSION));
+  console.log('[webinar-kit] overlay v7, ssn-link v' + (window.SSNLink && SSNLink.VERSION));
 
   var $ = function (id) { return document.getElementById(id); };
 
@@ -1440,7 +1440,7 @@
   function startChatfall(cmd) {
     var layer = $('chatfall-card');
     layer.querySelectorAll('.cf-card').forEach(function (el) { el.remove(); });
-    $('cf-title').textContent = cmd.title || 'What does the chat say?';
+    $('cf-title').textContent = cmd.title || 'Your feedback';
     var W = layer.clientWidth || innerWidth;
     var nCols = Math.max(2, Math.min(5, Math.floor(W / 360)));
     cf.gap = 16;
