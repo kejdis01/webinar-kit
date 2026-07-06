@@ -652,12 +652,12 @@
   </div>
 </div>
 
-<script src="ssn-link.js?v=8"></script>
+<script src="ssn-link.js?v=9"></script>
 <script>
 (function () {
   'use strict';
 
-  console.log('[webinar-kit] overlay v8, ssn-link v' + (window.SSNLink && SSNLink.VERSION));
+  console.log('[webinar-kit] overlay v9, ssn-link v' + (window.SSNLink && SSNLink.VERSION));
 
   var $ = function (id) { return document.getElementById(id); };
 
@@ -1431,10 +1431,28 @@
       pin.setAttribute('class', 'map-pin');
       pin.setAttribute('transform', 'translate(' + xy[0].toFixed(0) + ' ' + xy[1].toFixed(0) + ')');
       var label = e.name.replace(/\b\w/g, function (ch) { return ch.toUpperCase(); }) + (e.n > 1 ? ' ×' + e.n : '');
-      pin.innerHTML =
-        '<circle r="12" fill="rgba(29,158,117,0.3)"/>' +
-        '<circle r="5.5" fill="#1D9E75" stroke="#fff" stroke-width="1.5"/>' +
-        '<text y="-16" text-anchor="middle" fill="#fff" font-size="15" font-weight="700" font-family="Archivo, system-ui, sans-serif" style="paint-order: stroke; stroke: rgba(18,20,25,0.9); stroke-width: 4px;">' + label + '</text>';
+      var halo = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      halo.setAttribute('r', '12');
+      halo.setAttribute('fill', 'rgba(29,158,117,0.3)');
+      pin.appendChild(halo);
+
+      var dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      dot.setAttribute('r', '5.5');
+      dot.setAttribute('fill', '#1D9E75');
+      dot.setAttribute('stroke', '#fff');
+      dot.setAttribute('stroke-width', '1.5');
+      pin.appendChild(dot);
+
+      var text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      text.setAttribute('y', '-16');
+      text.setAttribute('text-anchor', 'middle');
+      text.setAttribute('fill', '#fff');
+      text.setAttribute('font-size', '15');
+      text.setAttribute('font-weight', '700');
+      text.setAttribute('font-family', 'Archivo, system-ui, sans-serif');
+      text.setAttribute('style', 'paint-order: stroke; stroke: rgba(18,20,25,0.9); stroke-width: 4px;');
+      text.textContent = label;
+      pin.appendChild(text);
       g.appendChild(pin);
     });
   }
